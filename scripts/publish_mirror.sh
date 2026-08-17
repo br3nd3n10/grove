@@ -7,17 +7,25 @@ repo_parent="$(dirname -- "${repo_root}")"
 mirror_override="${GROVE_MIRROR_ROOT-}"
 mirror_root="${GROVE_MIRROR_ROOT:-${repo_parent}/grove-public}"
 
-force_rebuild=0
-if [[ "$#" -gt 1 ]]; then
-  printf 'usage: %s [--force]\n' "$0" >&2
+usage() {
+  printf 'usage: %s [--force] [-m message]\n' "$0" >&2
+  printf '  default: incremental update — one new commit on the existing mirror\n' >&2
+  printf '  --force: destroy and rebuild the mirror as a single fresh commit\n' >&2
+  printf '  -m:      commit message for the mirror commit\n' >&2
   exit 2
-elif [[ "$#" -eq 1 ]]; then
-  if [[ "$1" != "--force" ]]; then
-    printf 'usage: %s [--force]\n' "$0" >&2
-    exit 2
-  fi
-  force_rebuild=1
-fi
+}
+
+force_rebuild=0
+commit_message=""
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --force) force_rebuild=1; shift ;;
+    -m)
+      [[ "$#" -ge 2 ]] || usage
+      commit_message="$2"; shift 2 ;;
+    *) usage ;;
+  esac
+done
 
 # Keep deletion narrowly scoped: only the expected sibling directory may be removed.
 if [[ "$(basename -- "${mirror_root}")" != "grove-public" || "${mirror_root}" != /* ]]; then
@@ -28,28 +36,41 @@ if [[ -z "${mirror_override}" && "$(dirname -- "${mirror_root}")" != "${repo_par
   printf 'refusing unexpected mirror path: %s\n' "${mirror_root}" >&2
   exit 1
 fi
+
+# Decide mode. Incremental requires an existing mirror git repo with a clean
+# worktree; anything else needs an explicit --force rebuild.
+incremental=0
 if [[ -e "${mirror_root}" ]]; then
   if [[ ! -d "${mirror_root}" || -L "${mirror_root}" ]]; then
-    printf 'refusing to remove non-directory mirror target: %s\n' "${mirror_root}" >&2
+    printf 'refusing to touch non-directory mirror target: %s\n' "${mirror_root}" >&2
     exit 1
   fi
-  existing_remotes=""
-  if [[ -e "${mirror_root}/.git" ]]; then
-    existing_remotes="$(git -C "${mirror_root}" remote 2>/dev/null || true)"
+  if [[ "${force_rebuild}" -eq 1 ]]; then
+    existing_remotes=""
+    if [[ -e "${mirror_root}/.git" ]]; then
+      existing_remotes="$(git -C "${mirror_root}" remote 2>/dev/null || true)"
+    fi
+    if [[ -n "${existing_remotes}" ]]; then
+      remote_names="${existing_remotes//$'\n'/, }"
+      printf 'warning: --force will remove mirror remote(s): %s\n' "${remote_names}" >&2
+    fi
+    rm -rf -- "${mirror_root}"
+    mkdir -- "${mirror_root}"
+  else
+    if [[ ! -e "${mirror_root}/.git" ]]; then
+      printf 'mirror exists but is not a git repository: %s\n' "${mirror_root}" >&2
+      printf 'rerun with --force to rebuild it from scratch.\n' >&2
+      exit 1
+    fi
+    if [[ -n "$(git -C "${mirror_root}" status --porcelain)" ]]; then
+      printf 'mirror worktree is not clean: %s\n' "${mirror_root}" >&2
+      exit 1
+    fi
+    incremental=1
   fi
-  if [[ -n "${existing_remotes}" && "${force_rebuild}" -eq 0 ]]; then
-    remote_names="${existing_remotes//$'\n'/, }"
-    printf 'refusing to remove mirror with configured remote(s): %s\n' "${remote_names}" >&2
-    printf 'remove the remote(s) with git -C %s remote remove <name>, or rerun %s --force.\n' "${mirror_root}" "$0" >&2
-    exit 1
-  fi
-  if [[ -n "${existing_remotes}" ]]; then
-    remote_names="${existing_remotes//$'\n'/, }"
-    printf 'warning: --force will remove mirror remote(s): %s\n' "${remote_names}" >&2
-  fi
-  rm -rf -- "${mirror_root}"
+else
+  mkdir -- "${mirror_root}"
 fi
-mkdir -- "${mirror_root}"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf -- "${tmp_dir}"' EXIT
@@ -60,6 +81,16 @@ mirror_experiment_list="${tmp_dir}/mirror-experiment-files"
 # The index is the allow-list. This prevents ignored caches and runtime state
 # from entering the mirror even when they exist beside the checkout.
 git -C "${repo_root}" ls-files -z -- > "${tracked_list}"
+
+# In incremental mode, clear the previous published tree first so deletions in
+# the source propagate to the mirror. Only tracked files are removed; the .git
+# directory and any operator files are untouched.
+if [[ "${incremental}" -eq 1 ]]; then
+  git -C "${mirror_root}" ls-files -z | while IFS= read -r -d '' path; do
+    rm -f -- "${mirror_root}/${path}"
+  done
+  find "${mirror_root}" -mindepth 1 -type d -not -path "${mirror_root}/.git*" -empty -delete
+fi
 
 copied_count=0
 while IFS= read -r -d '' path; do
@@ -86,9 +117,9 @@ while IFS= read -r -d '' path; do
 done < "${tracked_list}"
 printf 'files copied: %s\n' "${copied_count}"
 
-# Initialize before destination-side index checks so the comparison below can
-# use the same tracked-file allow-list as the source checkout.
-git -C "${mirror_root}" init >/dev/null
+if [[ "${incremental}" -eq 0 ]]; then
+  git -C "${mirror_root}" init >/dev/null
+fi
 
 # The operator path and legacy search terms live in an untracked private file,
 # so the public copy of this utility contains no private identifiers — not even
@@ -138,7 +169,7 @@ for path in root.rglob("*"):
     if not path.is_file():
         continue
     relative = path.relative_to(root)
-    if relative.parts and relative.parts[0] == "experiments":
+    if relative.parts and relative.parts[0] in {"experiments", ".git"}:
         continue
     if path.suffix.lower() not in {".md", ".txt"}:
         continue
@@ -181,22 +212,8 @@ while IFS= read -r -d '' path; do
   fi
 done < <(git -C "${repo_root}" ls-files -z -- scripts/)
 
-# A single commit keeps private history and remotes out of the public tree. The
-# caller remains responsible for any later publication.
-git -C "${mirror_root}" add --all --force
-git -C "${mirror_root}" -c user.name='Grove public mirror' -c user.email='grove-public@localhost' commit -m 'Initial public mirror' >/dev/null
-mirror_file_count="$(git -C "${mirror_root}" ls-files -z | python3 -c 'import sys; print(sum(1 for item in sys.stdin.buffer.read().split(b"\0") if item))')"
-printf 'files in mirror commit: %s\n' "${mirror_file_count}"
-if [[ "${mirror_file_count}" -ne "${copied_count}" ]]; then
-  printf 'mirror file count differs from copied count\n' >&2
-  exit 1
-fi
-if [[ -n "$(git -C "${mirror_root}" remote)" ]]; then
-  printf 'fresh mirror unexpectedly has a remote\n' >&2
-  exit 1
-fi
-
-legacy_hits="$(grep -RniI -- "${legacy_name}" "${mirror_root}" || true)"
+# Secret checks run on the staged tree before anything is committed.
+legacy_hits="$(grep -RniI --exclude-dir=.git -- "${legacy_name}" "${mirror_root}" || true)"
 legacy_hit_count=0
 if [[ -n "${legacy_hits}" ]]; then
   legacy_hit_count="$(printf '%s\n' "${legacy_hits}" | wc -l | tr -d '[:space:]')"
@@ -207,7 +224,7 @@ if [[ "${legacy_hit_count}" -ne 0 ]]; then
   exit 1
 fi
 
-home_hits="$(grep -RnIF -- "${operator_home}" "${mirror_root}" || true)"
+home_hits="$(grep -RnIF --exclude-dir=.git -- "${operator_home}" "${mirror_root}" || true)"
 home_hit_count=0
 if [[ -n "${home_hits}" ]]; then
   home_hit_count="$(printf '%s\n' "${home_hits}" | wc -l | tr -d '[:space:]')"
@@ -218,11 +235,38 @@ if [[ "${home_hit_count}" -ne 0 ]]; then
   exit 1
 fi
 
-log_output="$(git -C "${mirror_root}" log --oneline)"
+# Commit. Incremental mode adds one commit describing this publish; rebuild
+# mode produces the single fresh commit. Either way the commit message is
+# operator-supplied prose, never private history.
+if [[ "${incremental}" -eq 1 && -z "$(git -C "${mirror_root}" diff --cached --name-status)" ]]; then
+  printf 'no changes to publish; mirror already matches the source tree.\n'
+  exit 0
+fi
+if [[ -z "${commit_message}" ]]; then
+  if [[ "${incremental}" -eq 1 ]]; then
+    commit_message="Mirror update $(date -u +%Y-%m-%d)"
+  else
+    commit_message="Initial public mirror"
+  fi
+fi
+git -C "${mirror_root}" -c user.name='Grove public mirror' -c user.email='grove-public@localhost' commit -m "${commit_message}" >/dev/null
+
+mirror_file_count="$(git -C "${mirror_root}" ls-files -z | python3 -c 'import sys; print(sum(1 for item in sys.stdin.buffer.read().split(b"\0") if item))')"
+printf 'files in mirror commit: %s\n' "${mirror_file_count}"
+if [[ "${mirror_file_count}" -ne "${copied_count}" ]]; then
+  printf 'mirror file count differs from copied count\n' >&2
+  exit 1
+fi
+if [[ "${incremental}" -eq 0 && -n "$(git -C "${mirror_root}" remote)" ]]; then
+  printf 'fresh mirror unexpectedly has a remote\n' >&2
+  exit 1
+fi
+
+log_output="$(git -C "${mirror_root}" log --oneline -5)"
 commit_count="$(git -C "${mirror_root}" rev-list --count HEAD)"
-printf 'git log --oneline (%s commit):\n%s\n' "${commit_count}" "${log_output}"
-if [[ "${commit_count}" -ne 1 ]]; then
-  printf 'expected exactly one mirror commit\n' >&2
+printf 'git log --oneline (%s commit(s), last 5):\n%s\n' "${commit_count}" "${log_output}"
+if [[ "${incremental}" -eq 0 && "${commit_count}" -ne 1 ]]; then
+  printf 'expected exactly one mirror commit after rebuild\n' >&2
   exit 1
 fi
 if [[ -n "$(git -C "${mirror_root}" status --porcelain)" ]]; then
@@ -231,3 +275,4 @@ if [[ -n "$(git -C "${mirror_root}" status --porcelain)" ]]; then
 fi
 
 printf 'mirror ready: %s\n' "${mirror_root}"
+printf 'publish with: git -C %s push origin main\n' "${mirror_root}"
