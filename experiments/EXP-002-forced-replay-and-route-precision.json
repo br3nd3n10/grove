@@ -1,0 +1,174 @@
+{
+  "background": "The 2026-07-31 cycle reported zero forgetting from routed replay over two base-passing examples. The 2026-08-01 forced-adapter probe then showed the adapter breaks reg_dedupe when the router does not shield it. Routed stability and adapter stability are different claims and the first run only measured the first one.",
+  "check": "python scripts/check_experiment_spec.py --spec experiments/EXP-002-forced-replay-and-route-precision.json --report /srv/storage/grove/evaluations/exp002.json",
+  "command": "grove --db /srv/storage/grove/grove-exp002.db real-cycle --reset --spec experiments/EXP-002-forced-replay-and-route-precision.json --report /srv/storage/grove/evaluations/exp002.json",
+  "decision_rules": [
+    {
+      "comparison": ">=",
+      "description": "Held-out target fix rate clears the admission threshold.",
+      "hypothesis": "H1",
+      "id": "D1",
+      "path": "experts[*].metrics.heldout_target_rate",
+      "value": 0.75
+    },
+    {
+      "comparison": "==",
+      "description": "The run was made from a committed checkout.",
+      "id": "D10",
+      "path": "provenance.source.dirty",
+      "value": false
+    },
+    {
+      "comparison": "exists",
+      "description": "The report carries a run manifest digest, so the metrics these rules read are bound to the run that produced them.",
+      "id": "D11",
+      "path": "run_manifest_sha256"
+    },
+    {
+      "comparison": "<=",
+      "description": "Routed replay shows no regression.",
+      "hypothesis": "H2",
+      "id": "D2",
+      "path": "experts[*].metrics.regression_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": "==",
+      "description": "Forced-adapter replay was actually measured for every expert.",
+      "hypothesis": "H3",
+      "id": "D3",
+      "path": "experts[*].metrics.forced_replay_measured",
+      "value": true
+    },
+    {
+      "comparison": ">=",
+      "description": "The prior-passing replay cohort is large enough to support a stability claim. This is the denominator of the forced regression rate, not merely the number of tasks attempted.",
+      "hypothesis": "H3",
+      "id": "D4",
+      "path": "experts[*].metrics.forced_regression_denominator",
+      "value": 50
+    },
+    {
+      "comparison": "<=",
+      "description": "The adapter itself regresses nothing when forced on. The rate counts prior-passing replay tasks the forced adapter breaks, divided by the number of prior-passing tasks; a newly fixed task cannot offset a broken one.",
+      "hypothesis": "H3",
+      "id": "D5",
+      "path": "experts[*].metrics.forced_regression_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": "==",
+      "description": "The recorded forgetting claim is intrinsic, not router-shielded and not unmeasured.",
+      "hypothesis": "H3",
+      "id": "D6",
+      "path": "experts[*].metrics.forgetting_claim",
+      "value": "adapter_intrinsic"
+    },
+    {
+      "comparison": ">=",
+      "description": "The router reaches the independent held-out members of the expert's family.",
+      "hypothesis": "H4",
+      "id": "D7",
+      "path": "experts[*].metrics.route_recall",
+      "value": 0.9
+    },
+    {
+      "comparison": "==",
+      "description": "Route recall is scored on independent held-out tasks the candidate actually solves, with gold family tags and metadata stripped from the routing input, never on the training cluster that produced its routing profile.",
+      "hypothesis": "H4",
+      "id": "D7a",
+      "path": "experts[*].metrics.route_positive_source",
+      "value": "heldout_forced_pass_oracle_free"
+    },
+    {
+      "comparison": "==",
+      "description": "The routing probe saw no oracle metadata. A gold-tag probe scores tag equality, not routing, and is never independent evidence.",
+      "hypothesis": "H4",
+      "id": "D7b",
+      "path": "experts[*].metrics.route_probe_metadata",
+      "value": "oracle_free"
+    },
+    {
+      "comparison": "<=",
+      "description": "The router claims no base-passing replay traffic. Reported separately from recall because the two use different cohorts.",
+      "hypothesis": "H4",
+      "id": "D8",
+      "path": "experts[*].metrics.route_false_positive_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": "subset_of",
+      "description": "Reproducibility metadata carries no gap beyond the two this spec declares in advance as uncloseable from the control host: the base model lives on the worker and the worker returns no file manifest. Passing this rule means PARTIAL provenance, never complete provenance.",
+      "id": "D9",
+      "path": "provenance_gaps",
+      "value": [
+        "models.base.aggregate_sha256",
+        "worker.model_manifest_sha256"
+      ]
+    }
+  ],
+  "declared_at": "2026-08-07",
+  "hypotheses": [
+    {
+      "claim": "The grown expert fixes its target family on held-out prompts it never trained on.",
+      "falsified_if": "held-out target fix rate is below 0.75",
+      "id": "H1"
+    },
+    {
+      "claim": "The deployed system preserves prior competence: routed replay does not regress.",
+      "falsified_if": "routed regression rate exceeds 0.0",
+      "id": "H2"
+    },
+    {
+      "claim": "The adapter itself preserves prior competence, i.e. the no-forgetting result is not merely an artefact of routing.",
+      "falsified_if": "any prior-passing replay task fails under the forced adapter, measured over a cohort of at least 50 prior-passing tasks",
+      "id": "H3"
+    },
+    {
+      "claim": "The router sends the expert its own family and nothing else.",
+      "falsified_if": "route recall on the independent held-out positive cohort is below 0.9, or any base-passing replay task is routed to the expert",
+      "id": "H4"
+    }
+  ],
+  "permitted_provenance_gaps": [
+    "models.base.aggregate_sha256",
+    "worker.model_manifest_sha256"
+  ],
+  "preregistered_limitations": [
+    "Task cohorts are inherited from the post-hoc 2026-07-31 catalog design. This spec fixes the decision rules in advance; it does not make the cohort design blind.",
+    "H3 is expected to fail on the current escaped-path expert. That is the point: the prediction is written down so a failure is a recorded result rather than a footnote.",
+    "One base model, one adapter, one family. Nothing here supports a general continual-learning claim.",
+    "50 is a predeclared operational minimum, not a universal proof threshold. NIST TN 2045 shows a true rate of 0.9 is accepted with probability 0.27 at n=25 and 0.88 at n=100, so this cohort supports detecting gross regression, not a tight interval.",
+    "Provenance is partial by declaration. D9 permits exactly models.base.aggregate_sha256 and worker.model_manifest_sha256, because the Linux control host cannot hash a model directory that lives on the Apple worker and the worker does not return a file manifest. Any other gap fails.",
+    "This spec is NOT currently runnable. coding_catalog() supplies at most 24 captured tasks (20 train + 4 regression) while required_setup declares 50 prior-passing replay tasks, so grove real-cycle fails a capacity preflight before spending anything. Authoring the 50-task cohort is a prerequisite, not a detail.",
+    "The spec digest binds a report to this spec version. It is NOT a timestamp. This spec carries no timing_attestation, so its preregistration timing is unverified and it claims only seal_self_consistent.",
+    "required_setup is split: the machine block is enforced key-by-key and a missing key fails; the prose block is reported as unchecked and is never evidence that the rule was followed.",
+    "Route recall is measured on an oracle-free copy of each held-out task. route_recall_gold_tags is reported alongside as a diagnostic and is explicitly not independent routing evidence.",
+    "run_manifest_sha256 binds every value these rules read, plus the run setup, the provenance record and the training proposals, to the run that produced them. It detects local edits; it is not signed and not externally anchored, so it does not defeat an actor who can rewrite every local artifact.",
+    "EXP-002 is a single-arm report, so worker.model_manifest_sha256 remains a permitted partial-provenance gap here. It is NOT permitted for the paired EXP-003, where it is the only evidence both arms loaded the same model.",
+    "Evaluation and ledger rows written before digest recording existed are reported as unverified, never as clean. A curve checkpoint built from such a row is labelled unverified: readable history, not evidence."
+  ],
+  "required_setup": {
+    "machine": {
+      "arm": "primary",
+      "correction_source": "canonical",
+      "min_replay_examples": 50
+    },
+    "prose": {
+      "replay_authoring_rule": "Replay tasks must be base-passing tasks captured before the cycle, written without reference to the expert's failure family.",
+      "route_positive_cohort": "Predeclared held-out target tasks that the candidate passes when forced on. The training cluster must never be the recall denominator."
+    }
+  },
+  "requires": [
+    "Apple MLX worker reachable (grove worker-preflight)",
+    "LXD sandbox image grove-python-base present",
+    "a fresh database; the run must start from zero attempts"
+  ],
+  "requires_report_integrity": true,
+  "seal_self_consistent": true,
+  "spec_id": "EXP-002",
+  "spec_sha256": "ff97deb79317cb0516366279c9dd167f33c46c9b6a160e7c75c52c6b3ccc4cfd",
+  "status": "predeclared; blocked on the 50-task replay cohort",
+  "timing_attestation": null,
+  "title": "Does a grown expert preserve prior competence without the router shield?"
+}

@@ -1,0 +1,269 @@
+{
+  "analysis": {
+    "compare_arms_on": [
+      "experts[*].pairing_key",
+      "experts[*].metrics.heldout_target_rate",
+      "experts[*].metrics.target_after",
+      "experts[*].metrics.forced_regression_rate",
+      "cycle.experts_admitted"
+    ],
+    "primary_readout": "correction_comparison.per_source"
+  },
+  "background": "EXP-003 (sealed 402c5745e40a8fc853611edc4acefa6563336a75e633249b62aa5786e4b24d22) ended unusable: the self-repair arm produced 0 verified corrections in 60 generation calls, no expert was trained, and the arms could not be paired. That run was also not a fair test of self-repair. Repair attempts were generated under the global greedy decoding (temperature 0.0), so all 3 attempts per failure were near-identical, and every repair prompt carried one generic failure sentence instead of the verifier's actual reason. This spec retests the same two hypotheses under a fair regime: 8 attempts per failure; sampled repair decoding (temperature 0.8, max_tokens 768) with one recorded integer seed per attempt derived from base_seed 20260809, verified on the worker (mx.random.seed deterministically drives make_sampler's categorical draws, and the worker echoes the temperature and seed it ran); and honest verifier failure detail in every repair prompt (reason, case pass counts, exit/timeout/output class, stderr exception class name -- never hidden expected values or case payloads). Grading, baseline, held-out and replay decoding stay greedy at temperature 0.0. THRESHOLD JUSTIFICATION (D3 = 0.25, deliberately not copied from EXP-003's 0.5): (a) EXP-003's 0.5 bar was never calibrated for this model -- Olausson et al. (ICLR 2024) measured GPT-4 self-repair with its own feedback at 33.3% against 52.6% with human feedback, and Qwen2.5-Coder-1.5B-4bit is far weaker than GPT-4, so demanding half again GPT-4's self-feedback rate was a bar the model class has never met anywhere. (b) 0.25 is the utility floor for this design: 25% of the 20-task training cluster is 5 verified corrections, above the min_cluster_size 3 demand gate, so a rate at or above the bar is the least rate at which self-repair can feed a training run and make H2 testable at all; below it the primary arm cannot produce an expert by construction. (c) Under 8 independent sampled attempts, a per-attempt verified-repair probability of only ~3.5% already gives an expected per-failure yield of 0.25 (1-(1-p)^8), so failing this bar means the model has essentially no repair signal on these tasks, not merely a weak one. A measured rate below 0.25 therefore falsifies H1 under this regime rather than re-litigating the budget.",
+  "check": "python scripts/check_experiment_spec.py --spec experiments/EXP-004-fair-self-repair-ab.json --report /srv/storage/grove/evaluations/exp004-self.json --control-report /srv/storage/grove/evaluations/exp004-canonical.json",
+  "command": "grove --db /srv/storage/grove/grove-exp004-self.db real-cycle --reset --spec experiments/EXP-004-fair-self-repair-ab.json --arm primary --correction-source self-repair --compare-corrections --report /srv/storage/grove/evaluations/exp004-self.json",
+  "control_command": "grove --db /srv/storage/grove/grove-exp004-canonical.db real-cycle --reset --spec experiments/EXP-004-fair-self-repair-ab.json --arm control --correction-source canonical --compare-corrections --report /srv/storage/grove/evaluations/exp004-canonical.json",
+  "control_required_setup": {
+    "machine": {
+      "arm": "control",
+      "compare_corrections": true,
+      "correction_source": "canonical",
+      "min_replay_examples": 50,
+      "self_repair_attempts": 8,
+      "self_repair_decoding": {
+        "base_seed": 20260809,
+        "max_tokens": 768,
+        "temperature": 0.8
+      }
+    },
+    "prose": {
+      "repair_feedback_rule": "repair prompts carry only allowlisted verifier detail: reason, case pass counts, exit/timeout/output class, stderr exception class name; never hidden expected values or case payloads",
+      "repair_seed_derivation": "per-attempt seed = int(sha256(f'{base_seed}:{task_id}:{attempt}').hexdigest()[:8], 16) mod 2**31, recorded in every proposal's attempt_seeds"
+    }
+  },
+  "decision_rules": [
+    {
+      "comparison": "==",
+      "description": "The run used the self-repair correction source.",
+      "id": "D1",
+      "path": "correction_source",
+      "value": "self-repair"
+    },
+    {
+      "comparison": "==",
+      "description": "The comparison's proposals are the proposals that were trained on, so reported verified yield describes the corrections that actually reached the trainer.",
+      "hypothesis": "H1",
+      "id": "D10",
+      "path": "correction_comparison.training_proposal_reuse.enabled",
+      "value": true
+    },
+    {
+      "comparison": "!=",
+      "description": "The worker reported a digest over its own base-model files. Without it two arms can run different weights while reporting the same checkout and framework versions.",
+      "id": "D11",
+      "path": "provenance.worker.model_manifest_sha256",
+      "value": null
+    },
+    {
+      "comparison": "set==",
+      "description": "Both correction sources were measured over the same failures.",
+      "id": "D2",
+      "path": "correction_comparison.sources",
+      "value": [
+        "canonical-reference-v1",
+        "self-repair-v1"
+      ]
+    },
+    {
+      "comparison": ">=",
+      "description": "Under the fair regime, self-repair produced verified corrections for at least a quarter of the attempted failures. The threshold and its justification are declared in the background: 0.25 is the least rate that clears the min_cluster_size 3 demand gate on the 20-task cluster and so the least rate at which H2 is testable, and it corresponds to a ~3.5% per-attempt repair probability under 8 sampled attempts.",
+      "hypothesis": "H1",
+      "id": "D3",
+      "path": "correction_comparison.per_source.self-repair-v1.verified_rate",
+      "value": 0.25
+    },
+    {
+      "comparison": "==",
+      "description": "Provenance confirms the arm's correction source, so the two arms cannot be confused after the fact.",
+      "hypothesis": "H1",
+      "id": "D4",
+      "path": "provenance.extra.correction_source",
+      "value": "self-repair"
+    },
+    {
+      "comparison": "count>=",
+      "description": "The self-repair arm admitted an expert.",
+      "hypothesis": "H2",
+      "id": "D5",
+      "path": "cycle.experts_admitted",
+      "value": 1
+    },
+    {
+      "arm": "control",
+      "comparison": "==",
+      "description": "The control arm really used the canonical correction source.",
+      "id": "D5c",
+      "path": "correction_source",
+      "value": "canonical"
+    },
+    {
+      "comparison": ">=",
+      "description": "The self-repair arm clears the absolute admission bar.",
+      "hypothesis": "H2",
+      "id": "D6",
+      "path": "experts[*].metrics.heldout_target_rate",
+      "value": 0.75
+    },
+    {
+      "arm": "control",
+      "comparison": "count>=",
+      "description": "The control arm admitted an expert, so the comparison has a reference point.",
+      "hypothesis": "H2",
+      "id": "D6c",
+      "path": "cycle.experts_admitted",
+      "value": 1
+    },
+    {
+      "comparison": "delta>=",
+      "control_path": "experts[*].metrics.heldout_target_rate",
+      "description": "The self-repair arm's held-out fix rate is within 0.1 of the canonical control arm. This is the rule H2 actually names, and it cannot be evaluated without the control report. Experts are paired on pairing_key, the digest of the cluster label and the attempted-failure identity, exactly as in EXP-003.",
+      "hypothesis": "H2",
+      "id": "D6d",
+      "pair_on": "experts[*].pairing_key",
+      "path": "experts[*].metrics.heldout_target_rate",
+      "value": -0.1
+    },
+    {
+      "comparison": "delta<=",
+      "control_path": "experts[*].metrics.forced_regression_rate",
+      "description": "The self-repair arm forgets no more than the canonical arm. Stated as primary minus control at most 0.0: a positive delta means the self-repair expert broke more prior-passing replay tasks.",
+      "hypothesis": "H2",
+      "id": "D6e",
+      "pair_on": "experts[*].pairing_key",
+      "path": "experts[*].metrics.forced_regression_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": "subset_of",
+      "description": "Reproducibility metadata carries no gap beyond the one declared uncloseable from the control host. The worker model manifest is NOT on this list: a paired A/B comparison cannot rest on two arms that cannot show they loaded the same model files.",
+      "id": "D7",
+      "path": "provenance_gaps",
+      "value": [
+        "models.base.aggregate_sha256"
+      ]
+    },
+    {
+      "comparison": "exists",
+      "description": "Every expert carries a correction-source-independent pairing key, so the two arms can be matched at all. Expert ids are fresh UUIDs and never match across runs.",
+      "id": "D8",
+      "path": "experts[*].metrics.pairing_key"
+    },
+    {
+      "comparison": "exists",
+      "description": "The report carries a run manifest digest, so the metrics these rules read are bound to the run that produced them.",
+      "id": "D9",
+      "path": "run_manifest_sha256"
+    },
+    {
+      "comparison": "==",
+      "description": "The fair regime's repair budget actually ran: 8 attempts per failure, configured by this spec's required_setup, not by an edited policy default. run_setup.self_repair_attempts is also an arm identity path, so the control arm carries the same value.",
+      "id": "F1",
+      "path": "run_setup.self_repair_attempts",
+      "value": 8
+    },
+    {
+      "comparison": "==",
+      "description": "Repair-attempt generation sampled at temperature 0.8 rather than repeating one greedy completion, which is what wasted all 60 of EXP-003's generation calls.",
+      "id": "F2",
+      "path": "run_setup.self_repair_decoding.temperature",
+      "value": 0.8
+    },
+    {
+      "comparison": "==",
+      "description": "The declared base seed was recorded in the run setup; every attempt seed is derived from it and recorded per proposal, so the sampled attempts are reproducible on the same worker stack.",
+      "id": "F3",
+      "path": "run_setup.self_repair_decoding.base_seed",
+      "value": 20260809
+    },
+    {
+      "comparison": "==",
+      "description": "Evaluation decoding stayed greedy: only repair-attempt generation samples. Grading is deterministic sandbox execution and has no decoding at all.",
+      "id": "F4",
+      "path": "provenance.decoding_config.temperature",
+      "value": 0.0
+    },
+    {
+      "comparison": "==",
+      "description": "The per-purpose decoding record confirms held-out evaluation ran greedy; a sampled evaluation would make the admission bar a lottery.",
+      "id": "F4b",
+      "path": "run_setup.decoding_by_purpose.heldout_evaluation.temperature",
+      "value": 0.0
+    },
+    {
+      "comparison": "exists",
+      "description": "The report records the self-repair generation-call budget, so the inference-cost asymmetry between the arms is a number, not a footnote.",
+      "id": "F5",
+      "path": "correction_comparison.per_source.self-repair-v1.generation_calls"
+    }
+  ],
+  "declared_at": "2026-08-09",
+  "hypotheses": [
+    {
+      "claim": "Under a fair repair regime -- 8 attempts per failure, sampled decoding (temperature 0.8) with a recorded seed per attempt, and honest verifier failure feedback -- the deployed model produces verifier-approved repairs for its own failures at a materially useful rate.",
+      "falsified_if": "fewer than 25% of attempted training failures yield a verified self-repair within 8 sampled attempts (correction_comparison.per_source.self-repair-v1.verified_rate below 0.25)",
+      "id": "H1"
+    },
+    {
+      "claim": "An expert trained only on self-generated verified corrections reaches the same admission bar as one trained on human references.",
+      "falsified_if": "the self-repair arm fails admission while the canonical arm passes, or its held-out target fix rate is more than 0.1 below the canonical arm",
+      "id": "H2"
+    }
+  ],
+  "permitted_provenance_gaps": [
+    "models.base.aggregate_sha256"
+  ],
+  "preregistered_limitations": [
+    "Both arms share the same task catalog and the same hidden verifier suites, so this compares correction provenance only, not task design.",
+    "A verified self-repair is still verifier-approved, not human-approved. The verifier suite is the ceiling on what this can show.",
+    "compare_corrections measures verified-correction yield only. It does not establish that a self-repair-trained expert matches a canonical-trained expert; that is H2, it is evaluated by the delta rules against the control arm, and it needs both MLX cycles.",
+    "The arms are deliberately not matched on inference budget: self-repair gets up to eight sampled generation attempts per failure while the canonical arm gets one lookup. F5 requires the generation-call count to be reported alongside the outcome so the asymmetry is quantified, and raising the budget from EXP-003's three attempts is part of the variable under test, not a confound to hide.",
+    "Sampled repair attempts are reproducible only to the extent the worker's MLX runtime draws deterministically under mx.random.seed on the same hardware and framework versions (verified on the current worker stack, 2026-08-09). The recorded seeds are evidence of what ran; they are not a cross-platform replay guarantee.",
+    "Honest repair feedback is allowlisted, not free-form: reason, case pass counts, exit/timeout/output class, and the stderr exception class name only. It never carries hidden expected values, case payloads, or stderr message text, and a shipped test asserts no hidden-suite expected value can appear in a repair prompt. Feedback this constrained may understate what a human reviewer could tell the model.",
+    "Raising self_repair_attempts to 8 raises the chance of overfitting a repair to the hidden suite by search; the gate is unchanged (every attempt must pass the full hidden suite), so this risk is the same one any verifier-gated method carries.",
+    "Olausson et al. (ICLR 2024) report GPT-4 self-repair feedback at 33.30% against human feedback at 52.60%; the 0.25 bar was chosen from the demand-gate floor and that reference point, as justified in the background, and a pass here still would not show parity with human corrections.",
+    "Provenance is partial by declaration; D7 permits exactly one gap, models.base.aggregate_sha256. worker.model_manifest_sha256 is NOT permitted here: it is required resolved identity, because it is the only evidence that both arms loaded the same model files. An unavailable worker manifest refuses the pairing at check time and refuses the run before any cost.",
+    "Delta rules pair experts on experts[*].pairing_key, derived from the cluster label and the actual failed task ids the live capture attempted. Each report also records trained_failure_ids, the subset with accepted corrections that entered the dataset; that subset may differ by correction source and is an outcome, not a pairing mismatch. Matching keys mean the arms selected the same failure cluster, not that their training text was identical. Missing, duplicated or unmatched keys make the comparison unusable (exit 2), not falsified.",
+    "The spec digest binds a report to this spec version. It is NOT a timestamp. This spec carries no timing_attestation, so its preregistration timing is unverified and it claims only seal_self_consistent.",
+    "Each arm runs with an explicit --arm profile. The control arm is validated against control_required_setup, which is what makes a canonical control launchable under a spec whose primary arm requires self-repair. Both profiles declare the same self_repair_attempts and self_repair_decoding because run_setup.self_repair_attempts is an arm identity path and compare_corrections runs the self-repair source in both arms.",
+    "run_manifest_sha256 binds report metrics to the run locally. It detects edits; it is not signed and not externally anchored.",
+    "Arm pairing requires matching dirty-source content, worker framework versions, worker checkout revision/tree/dirty/status/worktree content, worker model manifest, sandbox fingerprint and actual training failure set. A permitted gap can waive none of those.",
+    "Every value the decision rules read is bound into the run manifest by path, derived from this spec's own rules. Editing a rule input without resealing makes the report unusable (exit 2), not falsified.",
+    "Control requirements are derived from these decision rules -- any delta comparison, control_path, pair_on or arm: control -- not from the requires_control_report flag. Removing or falsifying that flag cannot switch off arm pairing or control setup conformance.",
+    "An unusable run is not a falsified run: a blocker that prevents grading (unpairable arms, tampered report, missing control) exits 2 with every rule unevaluable and no hypothesis outcome, exactly as in EXP-003. A measured self-repair rate below 0.25 with both arms intact is a falsification of H1, which is a result."
+  ],
+  "required_resolved_identity": [
+    "provenance.worker.model_manifest_sha256"
+  ],
+  "required_setup": {
+    "machine": {
+      "arm": "primary",
+      "compare_corrections": true,
+      "correction_source": "self-repair",
+      "min_replay_examples": 50,
+      "self_repair_attempts": 8,
+      "self_repair_decoding": {
+        "base_seed": 20260809,
+        "max_tokens": 768,
+        "temperature": 0.8
+      }
+    },
+    "prose": {
+      "repair_feedback_rule": "repair prompts carry only allowlisted verifier detail: reason, case pass counts, exit/timeout/output class, stderr exception class name; never hidden expected values or case payloads",
+      "repair_seed_derivation": "per-attempt seed = int(sha256(f'{base_seed}:{task_id}:{attempt}').hexdigest()[:8], 16) mod 2**31, recorded in every proposal's attempt_seeds"
+    }
+  },
+  "requires": [
+    "Apple MLX worker reachable (grove worker-preflight)",
+    "worker checkout at a revision whose grove.mlx_worker honors and echoes per-request temperature and seed (seeding verified on the worker 2026-08-09: mx.random.seed deterministically drives make_sampler's categorical draws)",
+    "LXD sandbox image grove-python-base present",
+    "two fresh databases, one per arm; neither arm may reuse the other's store"
+  ],
+  "requires_control_report": true,
+  "requires_report_integrity": true,
+  "seal_self_consistent": true,
+  "spec_id": "EXP-004",
+  "spec_sha256": "f129e49a10cfb00f659420ca04fd6ae7fa4e54d61a1613690f47d92162795dd5",
+  "status": "sealed and pending; not yet run",
+  "timing_attestation": null,
+  "title": "Does self-repair work when the regime is fair: sampled, seeded attempts with honest verifier feedback?"
+}

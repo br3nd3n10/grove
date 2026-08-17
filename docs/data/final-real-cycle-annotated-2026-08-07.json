@@ -1,0 +1,613 @@
+{
+  "after_growth": {
+    "active_experts": 1,
+    "added_parameters": 2637824,
+    "capability": 0.625,
+    "cohorts": {
+      "plasticity_escaped_path": {
+        "expert_route_rate": 1.0,
+        "pass_rate": 0.75,
+        "passed": 3,
+        "tasks": 4
+      },
+      "regression_known_skills": {
+        "expert_route_rate": 0.25,
+        "pass_rate": 0.5,
+        "passed": 2,
+        "tasks": 4
+      }
+    },
+    "expert_route_rate": 0.625,
+    "passed": 5,
+    "tasks": 8
+  },
+  "base_model": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+  "base_model_resolved": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit@b3252a2f97102b1fb1571fec2c9b27219a8536be",
+  "baseline": {
+    "active_experts": 0,
+    "added_parameters": 0,
+    "capability": 0.25,
+    "cohorts": {
+      "plasticity_escaped_path": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.0,
+        "passed": 0,
+        "tasks": 4
+      },
+      "regression_known_skills": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.5,
+        "passed": 2,
+        "tasks": 4
+      }
+    },
+    "expert_route_rate": 0.0,
+    "passed": 2,
+    "tasks": 8
+  },
+  "curve": [
+    {
+      "active_experts": 0,
+      "added_parameters": 0,
+      "capability": 0.25,
+      "checkpoint": 0,
+      "forgetting": 0.0,
+      "label": "frozen_baseline",
+      "plasticity": 0.0,
+      "plasticity_gain": 0.0,
+      "stability": 0.5
+    },
+    {
+      "active_experts": 1,
+      "added_parameters": 2637824,
+      "capability": 0.625,
+      "checkpoint": 1,
+      "forgetting": 0.0,
+      "label": "after_growth",
+      "plasticity": 0.75,
+      "plasticity_gain": 0.75,
+      "stability": 0.5
+    },
+    {
+      "active_experts": 1,
+      "added_parameters": 2637824,
+      "capability": 0.25,
+      "checkpoint": 2,
+      "forgetting": 0.0,
+      "label": "rollback_drill",
+      "plasticity": 0.0,
+      "plasticity_gain": 0.0,
+      "stability": 0.5
+    },
+    {
+      "active_experts": 0,
+      "added_parameters": 0,
+      "capability": 0.25,
+      "checkpoint": 3,
+      "forgetting": 0.0,
+      "label": "rollback_drill_corrected",
+      "plasticity": 0.0,
+      "plasticity_gain": 0.0,
+      "stability": 0.5
+    }
+  ],
+  "cycle": {
+    "candidates_trained": 1,
+    "clusters_seen": 2,
+    "cycle_id": "cycle_dbcf5b17cd22",
+    "experts_admitted": [
+      "expert_979511319695"
+    ],
+    "experts_rejected": [],
+    "finished_at": "2026-07-31T19:11:40.938386+00:00",
+    "skipped": [
+      {
+        "cluster": "core_python",
+        "reason": "needs 3 failures; observed 2"
+      }
+    ],
+    "started_at": "2026-07-31T19:02:08.507321+00:00"
+  },
+  "deployments": [
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T18:52:48.661668+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [],
+      "id": "deployment_25d3618fd2e8",
+      "reason": "frozen baseline",
+      "router_version": "profile-router-v1",
+      "sequence": 1,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T19:11:40.881900+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [
+        "expert_979511319695"
+      ],
+      "id": "deployment_c2d902c943e6",
+      "reason": "admitted expert_979511319695",
+      "router_version": "profile-router-v1",
+      "sequence": 2,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T19:13:43.656318+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [],
+      "id": "deployment_669aa60d1a81",
+      "reason": "rollback to deployment_25d3618fd2e8: real rollback drill",
+      "router_version": "profile-router-v1",
+      "sequence": 3,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T19:15:19.155349+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [
+        "expert_979511319695"
+      ],
+      "id": "deployment_ddfc56d006c7",
+      "reason": "rollback to deployment_c2d902c943e6: restore admitted deployment after drill",
+      "router_version": "profile-router-v1",
+      "sequence": 4,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T19:16:17.801071+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [],
+      "id": "deployment_3365f1669464",
+      "reason": "rollback to deployment_25d3618fd2e8: corrected deployment-aware rollback measurement",
+      "router_version": "profile-router-v1",
+      "sequence": 5,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+      "created_at": "2026-07-31T19:17:52.630429+00:00",
+      "current": false,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [
+        "expert_979511319695"
+      ],
+      "id": "deployment_27db89b608cc",
+      "reason": "rollback to deployment_ddfc56d006c7: restore after corrected rollback measurement",
+      "router_version": "profile-router-v1",
+      "sequence": 6,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    },
+    {
+      "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit@b3252a2f97102b1fb1571fec2c9b27219a8536be",
+      "created_at": "2026-07-31T19:21:17.192883+00:00",
+      "current": true,
+      "decoding_config": {
+        "max_tokens": 768,
+        "temperature": 0.0
+      },
+      "expert_ids": [
+        "expert_979511319695"
+      ],
+      "id": "deployment_cfff527d63d2",
+      "reason": "pin resolved cached base-model commit after audit",
+      "router_version": "profile-router-v1",
+      "sequence": 7,
+      "verifier_suite_version": "escaped-path-v2+python-core-v1"
+    }
+  ],
+  "experts": [
+    {
+      "artifact": {
+        "adapter_path": "/Users/grove-worker/grove/adapters/expert_979511319695",
+        "adapter_sha256": "301519521c191776446e4ea23cd5aabf3546363d9903d1e57a5d78757c9f91e6",
+        "backend": "mlx-lora",
+        "base_model": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+        "dataset_sha256": "e817012ccc8ee874162f224e940e02f62eecbdefd8f44f7b4636640cca97884e",
+        "local_adapter_path": "/srv/storage/grove/experts/expert_979511319695",
+        "parameter_count": 2637824,
+        "size_bytes": 10565604,
+        "training_config": {
+          "adapter_path": "/Users/grove-worker/grove/adapters/expert_979511319695",
+          "batch_size": 1,
+          "data_path": "/Users/grove-worker/grove/datasets/expert_979511319695",
+          "iterations": 60,
+          "learning_rate": 2e-05,
+          "max_seq_length": 1024,
+          "model": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+          "num_layers": 8,
+          "seed": 17,
+          "timeout_seconds": 7200
+        },
+        "training_job_id": "job_5bd89f425646"
+      },
+      "id": "expert_979511319695",
+      "metrics": {
+        "heldout_target_examples": 4,
+        "heldout_target_rate": 0.75,
+        "plasticity_gain": 0.9,
+        "regression_after": 1.0,
+        "regression_before": 1.0,
+        "regression_rate": 0.0,
+        "replay_examples": 2,
+        "target_after": 0.9,
+        "target_before": 0.0,
+        "target_examples": 20,
+        "training_duration_seconds": 34.82338204199914,
+        "training_examples": 20
+      },
+      "status": "active"
+    }
+  ],
+  "final_current_deployment": {
+    "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit@b3252a2f97102b1fb1571fec2c9b27219a8536be",
+    "created_at": "2026-07-31T19:21:17.192883+00:00",
+    "current": true,
+    "decoding_config": {
+      "max_tokens": 768,
+      "temperature": 0.0
+    },
+    "expert_ids": [
+      "expert_979511319695"
+    ],
+    "id": "deployment_cfff527d63d2",
+    "reason": "pin resolved cached base-model commit after audit",
+    "router_version": "profile-router-v1",
+    "sequence": 7,
+    "verifier_suite_version": "escaped-path-v2+python-core-v1"
+  },
+  "future_probe": {
+    "passed": 0,
+    "results": {
+      "path_project": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "routed_expert": "expert_979511319695",
+        "score": 0.0
+      },
+      "path_rename": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "routed_expert": "expert_979511319695",
+        "score": 0.3333333333333333
+      }
+    },
+    "tasks": 2
+  },
+  "live_capture": {
+    "failed": 22,
+    "passed": 2,
+    "results": {
+      "path_delete": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_delete_v2": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_delete_v3": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_exists": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_exists_v2": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.75
+      },
+      "path_exists_v3": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_flatten": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_flatten_v2": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_flatten_v3": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_get": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_get_v2": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_get_v3": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.25
+      },
+      "path_get_v4": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_set": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_set_v2": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_set_v3": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_set_v4": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_unflatten": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "path_unflatten_v2": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "path_unflatten_v3": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "reg_balanced": {
+        "passed": false,
+        "reason": "candidate exited with status 1",
+        "score": 0.0
+      },
+      "reg_dedupe": {
+        "passed": true,
+        "reason": "all hidden cases passed",
+        "score": 1.0
+      },
+      "reg_run_lengths": {
+        "passed": false,
+        "reason": "one or more hidden cases failed",
+        "score": 0.0
+      },
+      "reg_sum_even": {
+        "passed": true,
+        "reason": "all hidden cases passed",
+        "score": 1.0
+      }
+    },
+    "tasks": 24
+  },
+  "report_notes": [
+    "rollback_corrected supersedes the growth-cost counters in rollback; behavior metrics were unchanged",
+    "the run loaded the sole cached Hugging Face snapshot identified by base_model_resolved"
+  ],
+  "restored_deployment": {
+    "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+    "created_at": "2026-07-31T19:15:19.155349+00:00",
+    "current": true,
+    "decoding_config": {
+      "max_tokens": 768,
+      "temperature": 0.0
+    },
+    "expert_ids": [
+      "expert_979511319695"
+    ],
+    "id": "deployment_ddfc56d006c7",
+    "reason": "rollback to deployment_c2d902c943e6: restore admitted deployment after drill",
+    "router_version": "profile-router-v1",
+    "sequence": 4,
+    "verifier_suite_version": "escaped-path-v2+python-core-v1"
+  },
+  "restored_deployment_final": {
+    "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
+    "created_at": "2026-07-31T19:17:52.630429+00:00",
+    "current": true,
+    "decoding_config": {
+      "max_tokens": 768,
+      "temperature": 0.0
+    },
+    "expert_ids": [
+      "expert_979511319695"
+    ],
+    "id": "deployment_27db89b608cc",
+    "reason": "rollback to deployment_ddfc56d006c7: restore after corrected rollback measurement",
+    "router_version": "profile-router-v1",
+    "sequence": 6,
+    "verifier_suite_version": "escaped-path-v2+python-core-v1"
+  },
+  "restored_smoke_test": {
+    "deployment": "deployment_27db89b608cc",
+    "expert_id": "expert_979511319695",
+    "passed": 3,
+    "results": {
+      "holdout_path_assign": true,
+      "holdout_path_flatten": true,
+      "holdout_path_lookup": true,
+      "holdout_path_membership": false
+    },
+    "tasks": 4
+  },
+  "rollback": {
+    "active_experts": 1,
+    "added_parameters": 2637824,
+    "capability": 0.25,
+    "cohorts": {
+      "plasticity_escaped_path": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.0,
+        "passed": 0,
+        "tasks": 4
+      },
+      "regression_known_skills": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.5,
+        "passed": 2,
+        "tasks": 4
+      }
+    },
+    "expert_route_rate": 0.0,
+    "passed": 2,
+    "tasks": 8
+  },
+  "rollback_audit_correction": {
+    "authoritative_db_evaluation": {
+      "created_at": "2026-07-31T19:17:52.573825+00:00",
+      "id": "eval_187c1f0faf5c",
+      "label": "rollback_drill_corrected",
+      "run_id": "benchmark_7d09c0ee7f74"
+    },
+    "corrected_values": {
+      "active_experts": 0,
+      "added_parameters": 0,
+      "capability": 0.25,
+      "cohorts": {
+        "plasticity_escaped_path": {
+          "expert_route_rate": 0.0,
+          "pass_rate": 0.0,
+          "passed": 0,
+          "tasks": 4
+        },
+        "regression_known_skills": {
+          "expert_route_rate": 0.0,
+          "pass_rate": 0.5,
+          "passed": 2,
+          "tasks": 4
+        }
+      },
+      "expert_route_rate": 0.0,
+      "passed": 2,
+      "tasks": 8
+    },
+    "disagreements": [
+      {
+        "authoritative": 0,
+        "authoritative_present": true,
+        "field": "active_experts",
+        "reported": 1,
+        "reported_present": true
+      },
+      {
+        "authoritative": 0,
+        "authoritative_present": true,
+        "field": "added_parameters",
+        "reported": 2637824,
+        "reported_present": true
+      }
+    ],
+    "generated_by": "scripts/audit_evaluation_report.py",
+    "note": "The SQLite evaluation record is authoritative for rollback metrics; the original report rollback block is preserved unchanged.",
+    "original_stale_values": {
+      "active_experts": 1,
+      "added_parameters": 2637824,
+      "capability": 0.25,
+      "cohorts": {
+        "plasticity_escaped_path": {
+          "expert_route_rate": 0.0,
+          "pass_rate": 0.0,
+          "passed": 0,
+          "tasks": 4
+        },
+        "regression_known_skills": {
+          "expert_route_rate": 0.0,
+          "pass_rate": 0.5,
+          "passed": 2,
+          "tasks": 4
+        }
+      },
+      "expert_route_rate": 0.0,
+      "passed": 2,
+      "tasks": 8
+    }
+  },
+  "rollback_corrected": {
+    "active_experts": 0,
+    "added_parameters": 0,
+    "capability": 0.25,
+    "cohorts": {
+      "plasticity_escaped_path": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.0,
+        "passed": 0,
+        "tasks": 4
+      },
+      "regression_known_skills": {
+        "expert_route_rate": 0.0,
+        "pass_rate": 0.5,
+        "passed": 2,
+        "tasks": 4
+      }
+    },
+    "expert_route_rate": 0.0,
+    "passed": 2,
+    "tasks": 8
+  },
+  "sandbox": {
+    "image": "grove-python-base",
+    "lxc_version": "Client version: 6.9\nServer version: 6.9",
+    "network_attached": false,
+    "profile": "grove-sandbox"
+  },
+  "store": {
+    "accepted_corrections": 20,
+    "active_experts": 1,
+    "attempts": 24,
+    "cycles": 1,
+    "deployments": 7,
+    "rejected_experts": 0,
+    "removed_experts": 0,
+    "tasks": 30,
+    "unresolved_failures": 4
+  },
+  "verified_corrections": 20
+}

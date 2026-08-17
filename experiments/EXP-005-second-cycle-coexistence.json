@@ -1,0 +1,309 @@
+{
+  "analysis": {
+    "primary_readout": "coexistence.after_cycle_2"
+  },
+  "background": "Every routing and stability number Grove has ever recorded is a single-expert measurement: route precision/recall 1.0 and routed-replay stability come from probes with exactly one deployed expert. This experiment is the first plural. It asks whether Grove can grow a SECOND expert on a new failure family while the first expert (escaped_path, the 2026-07-31 family, re-admitted in this run's own first cycle) stays deployed -- without router confusion, without interference with the first expert's competence, and with monotonically non-decreasing capability. It addresses README open questions 2 (multiple coexisting experts) and 4 (transfer to path_rename / path_project). SECOND FAMILY CHOICE: the declared transfer targets path_rename and path_project cannot themselves anchor the family -- they are two archived FUTURE-role tasks, two prompts cannot clear the min_cluster_size 3 demand gate, and training on the archived prompts would destroy the future-stream probe instead of answering it. The family path_restructure therefore trains the OPERATIONS those targets need (move, copy, pick, drop over escaped-dot paths) on 20 freshly authored training prompts and 4 freshly authored held-out prompts, all disjoint by content hash from every cycle-1 training, held-out, regression and future prompt; the archived path_rename/path_project prompts stay untouched in the FUTURE role and the after-cycle-2 future probe measures transfer to them as a diagnostic only (no rule reads it, partly because those tasks carry cycle-1's family tag and so under-measure expert-2 routing). The family deliberately shares the escaped-dot vocabulary with cycle 1's family: that overlap is the router stressor this experiment exists to measure, and a cross-family misroute is a falsification, not an accident. Evidence the base fails this family: the base scored 0/20 on the escaped-path family and the deployed cycle-1 system failed both archived restructure-shaped future probes (0/2 at the 2026-07-31 and 2026-08-09 runs). THRESHOLD JUSTIFICATIONS, one per declared rule family: (1) D5/D6 admission-and-coexistence -- count>=1 admitted in cycle 2 and exactly 2 active experts at the end are the definition of the question; fewer than two active experts means no coexistence was measured. (2) D7/D14b held-out bars at 0.75 -- this is REAL_CYCLE_POLICY.min_heldout_fix_rate, the same sealed admission bar every expert has faced since 2026-07-31; the new expert must meet the bar the old one met, and expert 1's forced-on re-measurement must still meet it because greedy decoding (temperature 0.0) is deterministic and its adapter is untouched, so any drop isolates to artifact corruption or measurement error. (3) D14 interference bound at 0.75 routed -- expert 1 measured heldout 0.75 forced-on at admission and single-expert route recall 1.0, so a routed re-measurement below 0.75 with expert 2 deployed means the router stopped delivering expert 1's own family; on a 4-task holdout (granularity 0.25) this is a zero-tolerance bound, chosen because decoding is deterministic and the only new variable is the second expert. (4) D8/D8a/D8b route recall >= 0.5 -- exactly REAL_CYCLE_POLICY.min_route_recall, the sealed gate each admission already applies, now demanded of the two-expert deployment combined and per family. (5) D9 route precision >= 0.8 -- precision here counts only positives routed to their OWN family's expert over all tasks routed to any expert; with the expected >= 3 forced-passing positives per family and a zero false-positive budget, 0.8 tolerates at most one cross-family misroute among five or more expert-bound routes; tighter would duplicate the recall rules on these small cohorts, looser would let systematic confusion pass. Precision remains cohort-dependent by construction (denominators are recorded beside it) and is a sealed decision rule, not a SleepPolicy field. (6) D10 route false-positive rate <= 0.0 -- REAL_CYCLE_POLICY.max_route_false_positive_rate: one claimed base-passing core task is exactly the mechanism that hides forgetting behind the router, so the budget is zero. (7) D11 replay floor >= 50 -- REAL_CYCLE_POLICY.min_replay_examples, the same NIST-TN-2045-motivated floor EXP-002 sealed; the cycle-2 suite is expected near 112 (94 core prior-passing plus cycle-1 training tasks now passing routed). (8) D12 cycle-1 targets in replay >= 16 -- REAL_CYCLE_POLICY.min_target_fix_rate (0.8) times the 20-task cycle-1 cluster: admission guarantees at least 16 birth tasks fixed forced-on, and single-expert recall 1.0 means a healthy router keeps at least those passing routed during the second capture; fewer than 16 present-and-passing means routing lost ground cycle 1 had already banked. (9) D13 routed replay regression <= 0.0 -- REAL_CYCLE_POLICY.max_regression_rate: the deployed two-expert system may break nothing whose latest recorded attempt passed. (10) D15/D16 capability deltas >= 0.0 at both checkpoints over a cohort union that is FIXED from baseline on (regression + both plasticity cohorts) -- the claim under test is monotonically non-decreasing capability, so the bound is exactly zero per step; the cohort is fixed because a growing cohort cannot support a monotonicity comparison. (11) D17/D18 parameter growth in (0, 6000000] -- the pinned LoRA configuration yields ~2.64M parameters per expert, so two experts are ~5.28M; 6M caps growth at that architecture with headroom for config-reported rounding, making a silently fattened adapter a falsification rather than a footnote. (12) D19/D19b forgetting_claim not 'unmeasured' per expert -- EXP-002 falsified adapter-intrinsic stability, so the honest expectation is router_shielded; what this experiment demands is that the per-expert forced-on probe was actually measured against a bare-base reference for BOTH experts, so no expert's forgetting hides behind the other's. (13) F-rules and provenance rules pin the sealed configuration (growth_cycles 2, second_family path_restructure, canonical corrections, greedy evaluation decoding at temperature 0.0) and EXP-004's integrity rigor (run manifest present, gaps limited to models.base.aggregate_sha256, worker model manifest resolved to a real digest).",
+  "check": "python scripts/check_experiment_spec.py --spec experiments/EXP-005-second-cycle-coexistence.json --report <report>",
+  "command": "scripts/run_exp005.sh <db> <report> -- which runs exactly: uv run grove --db <db> real-cycle --reset --cycles 2 --spec experiments/EXP-005-second-cycle-coexistence.json --arm primary --correction-source canonical --report <report>, propagating the real-cycle exit code unchanged (exit 2 included), then uv run python scripts/check_experiment_spec.py --spec experiments/EXP-005-second-cycle-coexistence.json --report <report> whose exit code becomes the script's",
+  "decision_rules": [
+    {
+      "comparison": "==",
+      "description": "The run executed the sealed two-cycle configuration, resolved from this spec's required_setup rather than an edited default.",
+      "id": "F1",
+      "path": "run_setup.growth_cycles",
+      "value": 2
+    },
+    {
+      "comparison": "==",
+      "description": "The second cycle trained the declared path_restructure family, not a substitute.",
+      "id": "F2",
+      "path": "run_setup.second_family",
+      "value": "path_restructure"
+    },
+    {
+      "comparison": "==",
+      "description": "Training targets were canonical human references in both cycles. Self-repair is not under test here: EXP-003 and EXP-004 measured it at 0/20 twice and that floor is a recorded result.",
+      "id": "F3",
+      "path": "run_setup.correction_source",
+      "value": "canonical"
+    },
+    {
+      "comparison": "==",
+      "description": "Provenance confirms the correction source, so the configuration cannot be mislabelled after the fact.",
+      "id": "F3b",
+      "path": "provenance.extra.correction_source",
+      "value": "canonical"
+    },
+    {
+      "comparison": "==",
+      "description": "All evaluation and grading decoding stayed greedy at temperature 0.0.",
+      "id": "F4",
+      "path": "provenance.decoding_config.temperature",
+      "value": 0.0
+    },
+    {
+      "comparison": "==",
+      "description": "The per-purpose decoding record confirms held-out evaluation ran greedy; a sampled evaluation would make every admission and interference bar a lottery.",
+      "id": "F4b",
+      "path": "run_setup.decoding_by_purpose.heldout_evaluation.temperature",
+      "value": 0.0
+    },
+    {
+      "comparison": "==",
+      "description": "Replay evaluation ran greedy too, so the regression bounds compare deterministic runs.",
+      "id": "F4c",
+      "path": "run_setup.decoding_by_purpose.replay_evaluation.temperature",
+      "value": 0.0
+    },
+    {
+      "comparison": "count>=",
+      "description": "The second growth cycle admitted an expert on the new family through the unchanged admission policy.",
+      "hypothesis": "H1",
+      "id": "D5",
+      "path": "second_cycle.experts_admitted",
+      "value": 1
+    },
+    {
+      "comparison": "==",
+      "description": "Both experts are simultaneously active and routable at the end of the run: the first cycle's expert was never removed, rolled back or displaced by the second.",
+      "hypothesis": "H1",
+      "id": "D6",
+      "path": "coexistence.after_cycle_2.active_experts",
+      "value": 2
+    },
+    {
+      "comparison": ">=",
+      "description": "The second expert meets the same sealed held-out bar (min_heldout_fix_rate 0.75) the first expert met, measured forced-on over its own four fresh held-out prompts.",
+      "hypothesis": "H1",
+      "id": "D7",
+      "path": "coexistence.after_cycle_2.per_family.path_restructure.heldout_forced_rate",
+      "value": 0.75
+    },
+    {
+      "comparison": ">=",
+      "description": "Combined two-expert route recall on oracle-free forced-passing held-out positives meets the sealed min_route_recall gate.",
+      "hypothesis": "H2",
+      "id": "D8",
+      "path": "coexistence.after_cycle_2.route_recall",
+      "value": 0.5
+    },
+    {
+      "comparison": ">=",
+      "description": "Expert 1's family still reaches expert 1 at the sealed recall gate with both experts deployed.",
+      "hypothesis": "H2",
+      "id": "D8a",
+      "path": "coexistence.after_cycle_2.per_family.escaped_path.route_recall",
+      "value": 0.5
+    },
+    {
+      "comparison": ">=",
+      "description": "Expert 2's family reaches expert 2 at the sealed recall gate with both experts deployed.",
+      "hypothesis": "H2",
+      "id": "D8b",
+      "path": "coexistence.after_cycle_2.per_family.path_restructure.route_recall",
+      "value": 0.5
+    },
+    {
+      "comparison": ">=",
+      "description": "Two-expert route precision: positives routed to their own family's expert over all tasks routed to any expert, at least 0.8 -- at most one cross-family misroute among the expected five or more expert-bound routes, with the false-positive budget pinned to zero separately. Cohort-dependent by construction; denominators are recorded beside it.",
+      "hypothesis": "H2",
+      "id": "D9",
+      "path": "coexistence.after_cycle_2.route_precision",
+      "value": 0.8
+    },
+    {
+      "comparison": "<=",
+      "description": "No prior-passing task outside both experts' families routes to any expert: the sealed max_route_false_positive_rate 0.0 budget, applied to the two-expert pool.",
+      "hypothesis": "H2",
+      "id": "D10",
+      "path": "coexistence.after_cycle_2.route_false_positive_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": ">=",
+      "description": "The final routed replay suite meets the sealed 50-task prior-passing floor.",
+      "hypothesis": "H3",
+      "id": "D11",
+      "path": "coexistence.after_cycle_2.replay_examples",
+      "value": 50
+    },
+    {
+      "comparison": ">=",
+      "description": "At least 16 of cycle 1's 20 training targets are present in the final replay suite -- the sealed min_target_fix_rate 0.8 floor carried forward: competence cycle 1 banked must be present and prior-passing under the two-expert deployment.",
+      "hypothesis": "H3",
+      "id": "D12",
+      "path": "coexistence.after_cycle_2.cycle_1_training_targets_in_replay",
+      "value": 16
+    },
+    {
+      "comparison": "<=",
+      "description": "Routed replay with both experts active regresses nothing that previously passed: the sealed max_regression_rate 0.0 budget applied to the deployed pool.",
+      "hypothesis": "H3",
+      "id": "D13",
+      "path": "coexistence.after_cycle_2.replay_regression_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": ">=",
+      "description": "The interference probe: expert 1's held-out target rate, re-measured ROUTED with expert 2 deployed, still meets the 0.75 bar it met at admission. Decoding is deterministic and expert 1's adapter is untouched, so a drop isolates to the router or the deployment.",
+      "hypothesis": "H3",
+      "id": "D14",
+      "path": "coexistence.after_cycle_2.per_family.escaped_path.heldout_routed_rate",
+      "value": 0.75
+    },
+    {
+      "comparison": ">=",
+      "description": "Expert 1's forced-on held-out rate is unchanged at or above its admission bar: the adapter itself, isolated from routing, kept its competence.",
+      "hypothesis": "H3",
+      "id": "D14b",
+      "path": "coexistence.after_cycle_2.per_family.escaped_path.heldout_forced_rate",
+      "value": 0.75
+    },
+    {
+      "comparison": ">=",
+      "description": "Capability over the fixed cohort union did not decrease from baseline to after cycle 1.",
+      "hypothesis": "H4",
+      "id": "D15",
+      "path": "coexistence.capability.delta_cycle_1",
+      "value": 0.0
+    },
+    {
+      "comparison": ">=",
+      "description": "Capability over the fixed cohort union did not decrease from after cycle 1 to after cycle 2.",
+      "hypothesis": "H4",
+      "id": "D16",
+      "path": "coexistence.capability.delta_cycle_2",
+      "value": 0.0
+    },
+    {
+      "comparison": ">",
+      "description": "Parameter growth is real: the deployed pool added parameters over the frozen base.",
+      "hypothesis": "H4",
+      "id": "D17",
+      "path": "coexistence.after_cycle_2.added_parameters",
+      "value": 0
+    },
+    {
+      "comparison": "<=",
+      "description": "Parameter growth stays adapter-sized: two LoRA experts at the pinned configuration are ~5.28M parameters, so 6M caps growth at that architecture and a silently fattened expert is a falsification.",
+      "hypothesis": "H4",
+      "id": "D18",
+      "path": "coexistence.after_cycle_2.added_parameters",
+      "value": 6000000
+    },
+    {
+      "comparison": "not_in",
+      "description": "Expert 1's forgetting claim was actually measured -- a per-expert forced-on probe against a bare-base reference -- so its honesty does not hide behind the other expert. EXP-002 makes router_shielded the expected value; unmeasured is the only refused one.",
+      "id": "D19",
+      "path": "coexistence.after_cycle_2.per_family.escaped_path.forgetting_claim",
+      "value": [
+        "unmeasured"
+      ]
+    },
+    {
+      "comparison": "not_in",
+      "description": "Expert 2's forgetting claim was measured the same way.",
+      "id": "D19b",
+      "path": "coexistence.after_cycle_2.per_family.path_restructure.forgetting_claim",
+      "value": [
+        "unmeasured"
+      ]
+    },
+    {
+      "comparison": "subset_of",
+      "description": "Reproducibility metadata carries no gap beyond the one declared uncloseable from the control host, matching EXP-004's rigor.",
+      "id": "D20",
+      "path": "provenance_gaps",
+      "value": [
+        "models.base.aggregate_sha256"
+      ]
+    },
+    {
+      "comparison": "!=",
+      "description": "The worker reported a digest over its own base-model files. Without it nothing shows which weights the run loaded.",
+      "id": "D21",
+      "path": "provenance.worker.model_manifest_sha256",
+      "value": null
+    },
+    {
+      "comparison": "exists",
+      "description": "The report carries a run manifest digest, so every value these rules read is bound to the run that produced it.",
+      "id": "D22",
+      "path": "run_manifest_sha256"
+    }
+  ],
+  "declared_at": "2026-08-11",
+  "hypotheses": [
+    {
+      "claim": "A second genuine growth cycle, run against the store in which the first expert is already admitted and deployed, admits a second expert on the path_restructure family through the unchanged admission policy, and both experts are simultaneously active and routable at the end.",
+      "falsified_if": "the second cycle admits no expert, fewer than two experts are active at the end, or the second expert's forced-on held-out rate over its four fresh held-out prompts is below 0.75",
+      "id": "H1"
+    },
+    {
+      "claim": "The router discriminates two coexisting experts on oracle-free prompts: each family reaches its own expert and neither expert claims traffic that belongs to the base or to the other family.",
+      "falsified_if": "combined or per-family route recall is below 0.5, two-expert route precision is below 0.8, or any prior-passing task outside both families routes to an expert (false-positive rate above 0.0)",
+      "id": "H2"
+    },
+    {
+      "claim": "Deploying the second expert does not interfere with the first: expert 1's held-out competence re-measures at its admission bar routed and forced-on, and routed replay over the prior-passing suite -- cycle 1's training targets included -- regresses nothing.",
+      "falsified_if": "expert 1's re-measured held-out rate (routed or forced-on) falls below 0.75 with expert 2 deployed, the final replay suite has fewer than 50 tasks or fewer than 16 of cycle 1's training targets, or routed replay regression exceeds 0.0",
+      "id": "H3"
+    },
+    {
+      "claim": "Capability over a cohort union fixed from baseline on is monotonically non-decreasing across the three checkpoints, while parameter growth stays adapter-sized.",
+      "falsified_if": "capability decreases at either checkpoint step (a negative delta), no parameters were added, or added parameters exceed 6,000,000",
+      "id": "H4"
+    }
+  ],
+  "permitted_provenance_gaps": [
+    "models.base.aggregate_sha256"
+  ],
+  "preregistered_limitations": [
+    "UNUSABLE VERSUS FALSIFIED, stated up front because EXP-004's research note demands it structurally: this spec is single-arm and declares no delta, control_path, pair_on or control-arm rule, so every decision rule grades independently against this one report. A measurable zero or a missing metric that a zero-yield outcome produces -- no second expert, an absent per-family rate, a route recall of None -- grades as a FALSIFIED rule (the checker records 'field is absent from the report' or a failed threshold), never as exit 2. Unusable (exit 2) stays reserved for genuine grading blockers: a spec altered after sealing, a report not bound to this spec version, a tampered or unbound run manifest, an edited decision-rule input, a run-setup that contradicts the sealed machine declaration, a non-finite rule input, or an infrastructure refusal before anything was measured. A zero-yield second cycle under this design therefore records H1's falsification instead of collapsing the run to unusable, which is the EXP-004 structural lesson applied.",
+    "This is one base model, one adapter architecture, two families and two experts. A pass licenses 'two experts coexisted under this router on this workload', not the continual-learning thesis, not N-expert scaling, and not learned routing: the router remains auditable tags/keywords/text overlap, probed oracle-free.",
+    "Route precision over mixed cohorts is cohort-dependent by construction; it is sealed here as a decision rule with its denominators recorded beside it, and it is deliberately NOT a SleepPolicy field (min_route_precision remains refused). The held-out denominators are small (4 prompts per family, granularity 0.25), so the recall and precision bars are coarse; they detect confusion, not fine-grained routing quality.",
+    "The interference bound compares expert 1's re-measured held-out rate against its own admission measurement under deterministic greedy decoding. It cannot distinguish a router that never routes the holdout from a router that routes it to the wrong expert; either way the competence is gone and the rule fails, which is the honest reading.",
+    "The archived transfer targets path_rename and path_project stay in the FUTURE role and are probed after cycle 2 as a diagnostic only. No rule reads the future probe: those prompts carry cycle-1's family tag (escaped_path), so the routed probe under-measures expert-2 transfer by construction. Reporting the diagnostic honestly is the point; gating on it would gate on a known-biased measurement.",
+    "The second family shares the escaped-dot vocabulary with cycle 1's family by design -- that is the confusion stressor. A cross-family misroute is a falsification of H2/H3, not an infrastructure failure, and must be recorded as such.",
+    "Cycle-1 residual failures (training tasks the first expert did not fix) remain unresolved and untrained through cycle 2; only the second family receives corrections. Retraining the first family would change the question from coexistence to retraining.",
+    "Corrections are canonical human references in both cycles. Self-repair is not under test and its 0/20-twice floor (EXP-003, EXP-004) is a recorded result this experiment does not relitigate.",
+    "Capability is measured over a cohort union fixed from the baseline checkpoint on (103 regression + 4 escaped_path held-outs + 4 path_restructure held-outs). Both plasticity cohorts double as route-probe positives and admission holdouts within their own cycle, as in every prior run; the path_restructure held-outs were authored for this experiment and have never been read by any prior gate.",
+    "The replay suite is derived from recorded prior-passing attempts (latest attempt passed), so its exact size is an outcome, not a constant; D11 and D12 bound it from below. Cycle-1 training targets enter it only by passing routed during the second capture, which is itself part of what is under test.",
+    "forgetting_claim is expected to resolve router_shielded for both experts: EXP-002 falsified adapter-intrinsic stability and nothing here re-litigates that. D19/D19b demand the per-expert measurement exists; they do not demand adapter_intrinsic.",
+    "The spec digest binds a report to this spec version. It is NOT a timestamp. This spec carries no timing_attestation, so its preregistration timing is unverified and it claims only seal_self_consistent.",
+    "run_manifest_sha256 binds report metrics to the run locally. It detects edits; it is not signed and not externally anchored, and it does not defeat an actor who rewrites the report, the manifest and its digest together.",
+    "Worker identity (checkout, framework versions, model manifest) is the worker's self-report; nothing here proves an untrusted worker ran that code or loaded those weights. Provenance is partial by declaration: D20 permits exactly one gap, models.base.aggregate_sha256, and the worker model manifest must resolve to a real digest (D21, required_resolved_identity) or the run refuses before any cost.",
+    "The two-invocation continuation of an existing store remains unimplemented; this experiment's multi-cycle mode is one invocation, one fresh database, two sequential cycles with no reset between them. The first expert remains admitted, deployed and routable throughout the second cycle by construction, and the deployment ledger records every manifest."
+  ],
+  "required_resolved_identity": [
+    "provenance.worker.model_manifest_sha256"
+  ],
+  "required_setup": {
+    "machine": {
+      "arm": "primary",
+      "compare_corrections": false,
+      "correction_source": "canonical",
+      "growth_cycles": 2,
+      "min_replay_examples": 50,
+      "second_family": "path_restructure"
+    },
+    "prose": {
+      "heldout_authoring_rule": "the four path_restructure held-out prompts were authored for this experiment and have never been read by any prior gate, training run, or tuning decision",
+      "replay_provenance_rule": "the replay suite at each checkpoint is the set of tasks whose latest recorded attempt passed; cycle-1 training targets enter it only by passing routed during the second live capture",
+      "second_family_disjointness": "every path_restructure training and held-out prompt is disjoint by content hash from every cycle-1 training, held-out, regression and future prompt; the store's content-hash leakage rejection enforces the same invariant at role-assignment time"
+    }
+  },
+  "requires": [
+    "Apple MLX worker reachable (grove worker-preflight) with a resolvable base-model manifest",
+    "LXD sandbox image grove-python-base present",
+    "one fresh database; the second cycle continues the same store with no reset between cycles",
+    "coding_catalog() plus second_cycle_catalog(): 123 cycle-1 tasks and 24 path_restructure tasks (20 train, 4 fresh held-outs)"
+  ],
+  "requires_report_integrity": true,
+  "seal_self_consistent": true,
+  "spec_id": "EXP-005",
+  "spec_sha256": "e6867048551b2df4885b41c8894f2d7aa02f4d5744002a9503765306f5ecd733",
+  "status": "sealed and pending; not yet run",
+  "timing_attestation": null,
+  "title": "Second-cycle coexistence: can Grove grow a second expert while the first stays deployed, without router confusion, interference, or capability regression?"
+}

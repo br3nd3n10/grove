@@ -1,0 +1,36 @@
+{
+  "adapter_id": "expert_979511319695",
+  "base_model_revision": "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit@b3252a2f97102b1fb1571fec2c9b27219a8536be",
+  "executed_at": "2026-07-31",
+  "purpose": "Identify the two residual failures behind the admitted candidate's 18/20 birth-task score.",
+  "recorded_in_operational_store": false,
+  "results": [
+    {"task_id": "path_get", "passed": true, "score": 1.0},
+    {"task_id": "path_exists", "passed": true, "score": 1.0},
+    {"task_id": "path_set", "passed": true, "score": 1.0},
+    {"task_id": "path_delete", "passed": true, "score": 1.0},
+    {"task_id": "path_flatten", "passed": true, "score": 1.0},
+    {"task_id": "path_unflatten", "passed": true, "score": 1.0},
+    {"task_id": "path_get_v2", "passed": true, "score": 1.0},
+    {"task_id": "path_get_v3", "passed": true, "score": 1.0},
+    {"task_id": "path_get_v4", "passed": true, "score": 1.0},
+    {"task_id": "path_exists_v2", "passed": true, "score": 1.0},
+    {"task_id": "path_exists_v3", "passed": true, "score": 1.0},
+    {"task_id": "path_set_v2", "passed": true, "score": 1.0},
+    {"task_id": "path_set_v3", "passed": true, "score": 1.0},
+    {"task_id": "path_set_v4", "passed": true, "score": 1.0},
+    {"task_id": "path_delete_v2", "passed": false, "score": 0.6666666666666666},
+    {"task_id": "path_delete_v3", "passed": false, "score": 0.6666666666666666},
+    {"task_id": "path_flatten_v2", "passed": true, "score": 1.0},
+    {"task_id": "path_flatten_v3", "passed": true, "score": 1.0},
+    {"task_id": "path_unflatten_v2", "passed": true, "score": 1.0},
+    {"task_id": "path_unflatten_v3", "passed": true, "score": 1.0}
+  ],
+  "summary": {
+    "passed": 18,
+    "tasks": 20,
+    "pass_rate": 0.9
+  },
+  "verifier": "sandboxed_python",
+  "verifier_suite_version": "escaped-path-v2"
+}

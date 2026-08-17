@@ -1,0 +1,226 @@
+{
+  "holdout_path_lookup": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "```python\nimport json\n\ndef solve(payload):\n    def lookup(payload, path):\n        for key in path:\n            if key == '\\\\':\n                key = '\\\\\\\\'\n            elif key == '.':\n                key = '\\\\.'\n            elif key == '*':\n                key = '\\\\*'\n            elif key == '?':\n                key = '\\\\?'\n            elif key == '[':\n                key = '\\\\['\n            elif key == ']':\n                key = '\\\\]'\n            elif key == '{':\n                key = '\\\\{'\n            elif key == '}':\n                key = '\\\\}'\n            elif key == ':':\n                key = '\\\\:'\n            elif key == ';':\n                key = '\\\\;'\n            elif key == ',':\n                key = '\\\\,'\n            elif key == ' ':\n                key = '\\\\ '\n            elif key == '\\n':\n                key = '\\\\n'\n            elif key == '\\t':\n                key = '\\\\t'\n            elif key == '\\r':\n                key = '\\\\r'\n            elif key == '\\f':\n                key = '\\\\f'\n            elif key == '\\\\\\\\':\n                key = '\\\\\\\\'\n            elif key == '\\\\.':\n                key = '\\\\.'\n            elif key == '\\\\*':\n                key = '\\\\*'\n            elif key == '\\\\?':\n                key = '\\\\?'\n            elif key == '\\\\[':\n                key = '\\\\['\n            elif key == '\\\\]':\n                key = '\\\\]'\n            elif key == '\\\\{':\n                key = '\\\\{'\n            elif key == '\\\\}':\n                key = '\\\\}'\n            elif key == '\\\\:':\n                key = '\\\\:'\n            elif key == '\\\\;':\n                key = '\\\\;'\n            elif key == '\\\\,':\n                key = '\\\\,'\n            elif key == '\\\\ ':\n                key = '\\\\ '\n            elif key == '\\\\n':\n                key = '\\\\n'\n            elif key == '\\\\t':\n                key = '\\\\t'\n            elif key == '\\\\r':\n                key = '\\\\r'\n            elif key == '\\\\f':\n                key = '\\\\f'\n            elif key == '\\\\\\\\':\n                key = '\\\\\\\\'\n            elif key == '\\\\.':\n                key = '\\\\.'\n            elif key == '\\\\*':\n                key = '\\\\*'\n            elif key == '\\\\?':\n                key = '\\\\?'\n            elif key == '\\\\[':\n                key = '\\\\['\n            elif key == '\\\\]':\n                key = '\\\\]'\n            elif key == '\\\\{':\n                key = '\\\\{'\n            elif key == '\\\\}':\n                key = '\\\\}'\n            elif key == '\\\\:':\n                key = '\\\\:'\n            elif key == '\\\\;':\n                key = '\\\\;'\n            elif key == '\\\\,':\n                key = '\\\\,'\n            elif key == '\\\\ ':\n                key = '\\\\ '\n            elif key == '\\\\n':\n                key = '\\\\n'\n            elif key == '\\\\t':\n                key = '\\\\t'\n            elif key == '\\\\r':\n                key = '\\\\r'\n            elif key == '\\\\f':\n                key = '\\\\f'\n            elif key == '\\\\\\\\':\n                key = '\\\\\\\\'\n            elif key == '\\\\.':\n                key = '\\\\.'\n            elif key == '\\\\*':\n                key = '\\\\*'\n            elif key == '\\\\?':\n                key = '\\\\?'\n            elif key == '\\\\[':\n                key = '\\\\['\n            elif key == '\\\\]':\n                key = '\\\\]'\n            elif key == '\\\\{':\n                key = '\\\\{'\n            elif key == '\\\\}':\n                key = '\\\\}'\n            elif key == '\\\\:':\n                key = '\\\\:'\n            elif key == '\\\\;':\n                key = '\\\\;'\n            elif key == '\\\\,':\n                key = '\\\\,'\n            elif key == '\\\\ ':\n                key = '\\\\ '"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    node = payload[\"document\"]\n    for part in _split(payload[\"path\"]):\n        if not isinstance(node, dict) or part not in node:\n            return payload.get(\"default\")\n        node = node[part]\n    return node"
+    }
+  },
+  "holdout_path_membership": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\n\ndef solve(payload):\n    # Check if the payload is a dictionary\n    if isinstance(payload, dict):\n        # Check if the key is a string\n        if isinstance(payload['key'], str):\n            # Check if the key contains the full escaped dotted path\n            if payload['key'].endswith('.json'):\n                return True\n    return False"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.6666666666666666,
+      "reason": "one or more hidden cases failed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    node = payload[\"document\"]\n    parts = _split(payload[\"path\"])\n    for part in parts[:-1]:\n        if not isinstance(node, dict) or part not in node:\n            return False\n        node = node[part]\n    if parts[-1] == \"\":\n        return True\n    return node is not None"
+    }
+  },
+  "holdout_path_assign": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\nimport copy\n\ndef solve(payload):\n    def build_parent(parent, path):\n        parts = path.split('.')\n        for part in parts[:-1]:\n            if part not in parent:\n                parent[part] = {}\n            parent = parent[part]\n        return parent\n\n    def assign_value(parent, path, value):\n        build_parent(parent, path).update({parts[-1]: value})\n\n    def deep_copy(obj):\n        if isinstance(obj, dict):\n            return {key: deep_copy(value) for key, value in obj.items()}\n        elif isinstance(obj, list):\n            return [deep_copy(item) for item in obj]\n        else:\n            return obj\n\n    def replace_scalar(parent, path, value):\n        build_parent(parent, path).update({parts[-1]: value})\n\n    def solve_helper(obj, path):\n        if isinstance(obj, dict):\n            for key, value in obj.items():\n                if key == path:\n                    return value\n                elif isinstance(value, dict) or isinstance(value, list):\n                    result = solve_helper(value, path)\n                    if result is not None:\n                        return result\n        elif isinstance(obj, list):\n            for item in obj:\n                result = solve_helper(item, path)\n                if result is not None:\n                    return result\n        return None\n\n    payload_copy = deep_copy(payload)\n    path = payload_copy['path']\n    value = payload_copy['value']\n    assign_value(payload_copy, path, value)\n    return json.dumps(payload_copy)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    import copy\n    result = copy.deepcopy(payload[\"document\"])\n    parts = _split(payload[\"path\"])\n    node = result\n    for part in parts[:-1]:\n        child = node.get(part)\n        if not isinstance(child, dict):\n            child = {}\n            node[part] = child\n        node = child\n    node[parts[-1]] = payload[\"value\"]\n    return result"
+    }
+  },
+  "holdout_path_flatten": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "one or more hidden cases failed",
+      "response": "import json\n\ndef solve(payload):\n    def flatten_dict(d, prefix=''):\n        flat_dict = {}\n        for key, value in d.items():\n            if isinstance(value, dict):\n                flat_dict.update(flatten_dict(value, prefix + key + '.'))\n            elif isinstance(value, list):\n                flat_dict.update({prefix + key + '[' + str(i) + ']': item for i, item in enumerate(value)})\n            else:\n                flat_dict[prefix + key] = value\n        return flat_dict\n\n    return json.dumps(flatten_dict(payload), indent=4)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _escape(part):\n    return part.replace(\"\\\\\", \"\\\\\\\\\").replace(\".\", \"\\\\.\")\n\ndef solve(payload):\n    output = {}\n    def visit(node, parts):\n        if isinstance(node, dict) and node:\n            for key in sorted(node):\n                visit(node[key], parts + [_escape(key)])\n        else:\n            output[\".\".join(parts)] = node\n    for key in sorted(payload):\n        visit(payload[key], [_escape(key)])\n    return output"
+    }
+  },
+  "fresh_lookup": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\n\ndef solve(payload):\n    document = payload['document']\n    path = payload['path']\n    default = payload.get('default', None)\n\n    def walk(doc, path):\n        keys = path.split('.')\n        for key in keys:\n            if key == '':\n                continue\n            if key.endswith('\\\\'):\n                key = key[:-1]\n            if key.endswith('\\\\\\\\'):\n                key = key[:-2]\n            if key not in doc:\n                return default\n            doc = doc[key]\n        return doc\n\n    return walk(document, path)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    node = payload[\"document\"]\n    for part in _split(payload[\"path\"]):\n        if not isinstance(node, dict) or part not in node:\n            return payload.get(\"default\")\n        node = node[part]\n    return node"
+    }
+  },
+  "fresh_member": {
+    "base": {
+      "passed": false,
+      "score": 0.3333333333333333,
+      "reason": "one or more hidden cases failed",
+      "response": "import json\n\ndef solve(payload):\n    document = payload['document']\n    path = payload['path']\n    \n    # Split the path by periods, escaping backslashes\n    path_parts = path.split('.')\n    escaped_parts = []\n    for part in path_parts:\n        if part == '\\\\':\n            escaped_parts.append('\\\\')\n        else:\n            escaped_parts.append(part)\n    \n    # Join the escaped parts back into a single string\n    escaped_path = '.'.join(escaped_parts)\n    \n    # Check if the path exists in the document\n    return escaped_path in document"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    node = payload[\"document\"]\n    for part in _split(payload[\"path\"]):\n        if not isinstance(node, dict) or part not in node:\n            return False\n        node = node[part]\n    return True"
+    }
+  },
+  "fresh_assign": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\nfrom copy import deepcopy\n\ndef solve(payload):\n    document = deepcopy(payload['document'])\n    path = payload['path'].split('.')\n    value = payload['value']\n\n    for component in path:\n        if component not in document:\n            document[component] = {}\n        document = document[component]\n\n    document[path[-1]] = value\n    return document"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    import copy\n    result = copy.deepcopy(payload[\"document\"])\n    parts = _split(payload[\"path\"])\n    node = result\n    for part in parts[:-1]:\n        child = node.get(part)\n        if not isinstance(child, dict):\n            child = {}\n            node[part] = child\n        node = child\n    node[parts[-1]] = payload[\"value\"]\n    return result"
+    }
+  },
+  "fresh_remove": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import copy\n\ndef solve(payload):\n    document = payload['document']\n    path = payload['path']\n    \n    # Split the path by periods, escaping backslashes\n    path_parts = path.split('.')\n    escaped_path_parts = [re.escape(part) for part in path_parts]\n    \n    # Construct the path in the document\n    current = document\n    for part in escaped_path_parts:\n        if part in current:\n            current = current[part]\n        else:\n            return document\n    \n    # Remove the entry\n    if current:\n        del current\n    \n    # Delete any ancestor dictionaries that are now empty\n    while current and not current:\n        current = current.popitem(last=False)\n    \n    # Return the modified document\n    return document"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    import copy\n    result = copy.deepcopy(payload[\"document\"])\n    parts = _split(payload[\"path\"])\n    node = result\n    for part in parts[:-1]:\n        child = node.get(part)\n        if not isinstance(child, dict):\n            return result\n        node = child\n    del node[parts[-1]]\n    for part in reversed(parts[:-1]):\n        if node[part] == {}:\n            del node[part]\n        else:\n            break\n    return result"
+    }
+  },
+  "fresh_flatten": {
+    "base": {
+      "passed": false,
+      "score": 0.3333333333333333,
+      "reason": "one or more hidden cases failed",
+      "response": "import json\n\ndef solve(payload):\n    def process_key(key):\n        if '.' in key or '\\\\' in key:\n            return '\\\\' + key.replace('.', '\\\\.')\n        return key\n\n    def process_value(value):\n        if isinstance(value, dict):\n            return {process_key(k): process_value(v) for k, v in value.items()}\n        elif isinstance(value, list):\n            return [process_value(v) for v in value]\n        else:\n            return value\n\n    return process_value(payload)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _escape(part):\n    return part.replace(\"\\\\\", \"\\\\\\\\\").replace(\".\", \"\\\\.\")\n\ndef solve(payload):\n    output = {}\n    def visit(node, parts):\n        if isinstance(node, dict) and node:\n            for key in sorted(node):\n                visit(node[key], parts + [_escape(key)])\n        else:\n            output[\".\".join(parts)] = node\n    for key in sorted(payload):\n        visit(payload[key], [_escape(key)])\n    return output"
+    }
+  },
+  "fresh_expand": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\n\ndef solve(payload):\n    def parse_path(path):\n        parts = path.split('.')\n        current = {}\n        for part in parts:\n            if '\\\\' in part:\n                part = part.replace('\\\\', '\\\\\\\\')\n            if part == '':\n                continue\n            if part.endswith('\\\\'):\n                part = part[:-1]\n            if part == '.':\n                current = {}\n            else:\n                if part not in current:\n                    current[part] = {}\n                current = current[part]\n        return current\n\n    result = {}\n    for path, value in payload.items():\n        parsed_path = parse_path(path)\n        parsed_path.update(value)\n        result.update(parsed_path)\n    return json.dumps(result, indent=4)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    result = {}\n    for path, value in payload.items():\n        parts = _split(path)\n        node = result\n        for part in parts[:-1]:\n            node = node.setdefault(part, {})\n        node[parts[-1]] = value\n    return result"
+    }
+  },
+  "reg_sum_even": {
+    "base": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def solve(payload):\n    return sum(x for x in payload if x % 2 == 0)"
+    },
+    "adapter": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    return sum(x for x in payload if x % 2 == 0)"
+    }
+  },
+  "reg_dedupe": {
+    "base": {
+      "passed": true,
+      "score": 1.0,
+      "reason": "all hidden cases passed",
+      "response": "def solve(payload):\n    seen = set()\n    result = []\n    for item in payload:\n        if item not in seen:\n            seen.add(item)\n            result.append(item)\n    return result"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    result = []\n    seen = set()\n    for path in payload:\n        parts = _split(path)\n        node = result\n        for part in parts[:-1]:\n            child = node.get(part)\n            if not isinstance(child, dict):\n                child = {}\n                node[part] = child\n            node = child\n        if parts[-1] not in seen:\n            node[parts[-1]] = result[-1] if result else parts[-1]\n            seen.add(parts[-1])\n    return result"
+    }
+  },
+  "reg_run_lengths": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "one or more hidden cases failed",
+      "response": "import json\n\ndef solve(payload):\n    # Split the payload into individual characters\n    characters = list(payload)\n    \n    # Initialize an empty list to store the consecutive runs\n    consecutive_runs = []\n    \n    # Iterate through the characters to find consecutive runs\n    for i in range(len(characters)):\n        count = 1\n        while i + 1 < len(characters) and characters[i] == characters[i + 1]:\n            count += 1\n            i += 1\n        consecutive_runs.append([characters[i], count])\n    \n    # Convert the list of consecutive runs to JSON and return\n    return json.dumps(consecutive_runs)"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.3333333333333333,
+      "reason": "one or more hidden cases failed",
+      "response": "def _split(payload):\n    parts, current, count = [], [], 0\n    for char in payload:\n        if char == current:\n            count += 1\n        else:\n            parts.append([current, count])\n            current = char\n            count = 1\n    if count:\n        parts.append([current, count])\n    return parts\n\ndef solve(payload):\n    return _split(payload)"
+    }
+  },
+  "reg_balanced": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "def solve(payload):\n    stack = []\n    for char in payload:\n        if char in '([{':\n            stack.append(char)\n        elif char in ')]}':\n            if not stack or stack.pop() != {'(': ')', '[': ']', '{': '}'}[char]:\n                return False\n    return not stack"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.5,
+      "reason": "one or more hidden cases failed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        elif char == \"[\":\n            parts.append(\"\".join(current))\n            current = [\"(\"]\n        elif char == \"]\":\n            parts.append(\"\".join(current))\n            current = []\n        elif char == \"{\":\n            parts.append(\"\".join(current))\n            current = [\"{\"]\n        elif char == \"}\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    parts = _split(payload)\n    stack = []\n    for part in parts:\n        if part == \"(\":\n            stack.append(part)\n        elif part == \"[\":\n            stack.append(part)\n        elif part == \"{\":\n            stack.append(part)\n        elif part == \")\":\n            if not stack or stack.pop() != \"(\":\n                return False\n        elif part == \"]\":\n            if not stack or stack.pop() != \"[\":\n                return False\n        elif part == \"}\":\n            if not stack or stack.pop() != \"{\":\n                return False\n    return not stack"
+    }
+  },
+  "path_rename": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "candidate exited with status 1",
+      "response": "import json\nfrom copy import deepcopy\n\ndef solve(payload):\n    # Deep copy the payload\n    payload_copy = deepcopy(payload)\n    \n    # Extract the escaped-dot paths\n    from_path = payload_copy.pop('from')\n    to_path = payload_copy.pop('to')\n    \n    # Check if from is missing\n    if not from_path:\n        return payload_copy\n    \n    # Split the paths into parts\n    from_parts = from_path.split('.')\n    to_parts = to_path.split('.')\n    \n    # Find the target parent\n    target_parent = payload_copy\n    for part in from_parts[:-1]:\n        if part not in target_parent:\n            target_parent[part] = {}\n        target_parent = target_parent[part]\n    \n    # Move the value\n    target_parent[to_parts[-1]] = target_parent.pop(from_parts[-1])\n    \n    return payload_copy"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.3333333333333333,
+      "reason": "one or more hidden cases failed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    import copy\n    result = copy.deepcopy(payload[\"document\"])\n    parts = _split(payload[\"from\"])\n    node = result\n    for part in parts[:-1]:\n        child = node.get(part)\n        if not isinstance(child, dict):\n            child = {}\n            node[part] = child\n        node = child\n    target = parts[-1]\n    value = result.get(parts[-1])\n    if not isinstance(value, dict) and value is not None:\n        child = copy.deepcopy(value)\n        node[target] = child\n    return result"
+    }
+  },
+  "path_project": {
+    "base": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "one or more hidden cases failed",
+      "response": "import json\n\ndef solve(payload):\n    document = payload['document']\n    paths = payload['paths']\n    \n    result = {}\n    for path in paths:\n        escaped_path = path.replace('.', '\\\\.')\n        if escaped_path in document:\n            result[escaped_path] = document[escaped_path]\n        else:\n            result[escaped_path] = None\n    \n    return json.dumps(result, indent=4)"
+    },
+    "adapter": {
+      "passed": false,
+      "score": 0.0,
+      "reason": "one or more hidden cases failed",
+      "response": "def _split(path):\n    parts, current, escaped = [], [], False\n    for char in path:\n        if escaped:\n            current.append(char)\n            escaped = False\n        elif char == \"\\\\\":\n            escaped = True\n        elif char == \".\":\n            parts.append(\"\".join(current))\n            current = []\n        else:\n            current.append(char)\n    if escaped:\n        current.append(\"\\\\\")\n    parts.append(\"\".join(current))\n    return parts\n\ndef solve(payload):\n    result = {}\n    for path, value in payload.items():\n        parts = _split(path)\n        node = result\n        for part in parts[:-1]:\n            node = node.setdefault(part, {})\n        node[parts[-1]] = value\n    return result"
+    }
+  }
+}

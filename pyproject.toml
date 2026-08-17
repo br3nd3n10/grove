@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grove-learning"
+version = "0.1.0"
+description = "A verified, reversible expert-growth loop for continually improving agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Brenden" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.6"]
+mlx = [
+  "mlx-lm[train]>=0.31,<0.33; sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+
+[project.scripts]
+grove = "grove.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grove"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = ["integration: requires local host services such as LXD"]

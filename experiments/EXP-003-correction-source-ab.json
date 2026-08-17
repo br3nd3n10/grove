@@ -1,0 +1,209 @@
+{
+  "analysis": {
+    "compare_arms_on": [
+      "experts[*].pairing_key",
+      "experts[*].metrics.heldout_target_rate",
+      "experts[*].metrics.target_after",
+      "experts[*].metrics.forced_regression_rate",
+      "cycle.experts_admitted"
+    ],
+    "primary_readout": "correction_comparison.per_source"
+  },
+  "background": "In the 2026-07-31 cycle the failures selected which examples to train on, but the training targets were human-written canonical solutions (source canonical-reference-v1). 'Learns from its own failures' is therefore not yet demonstrated: the loop noticed its failures and a human fixed them.",
+  "check": "python scripts/check_experiment_spec.py --spec experiments/EXP-003-correction-source-ab.json --report /srv/storage/grove/evaluations/exp003-self.json --control-report /srv/storage/grove/evaluations/exp003-canonical.json",
+  "command": "grove --db /srv/storage/grove/grove-exp003-self.db real-cycle --reset --spec experiments/EXP-003-correction-source-ab.json --arm primary --correction-source self-repair --compare-corrections --report /srv/storage/grove/evaluations/exp003-self.json",
+  "control_command": "grove --db /srv/storage/grove/grove-exp003-canonical.db real-cycle --reset --spec experiments/EXP-003-correction-source-ab.json --arm control --correction-source canonical --compare-corrections --report /srv/storage/grove/evaluations/exp003-canonical.json",
+  "control_required_setup": {
+    "machine": {
+      "arm": "control",
+      "compare_corrections": true,
+      "correction_source": "canonical",
+      "min_replay_examples": 50,
+      "self_repair_attempts": 3
+    },
+    "prose": {}
+  },
+  "decision_rules": [
+    {
+      "comparison": "==",
+      "description": "The run used the self-repair correction source.",
+      "id": "D1",
+      "path": "correction_source",
+      "value": "self-repair"
+    },
+    {
+      "comparison": "==",
+      "description": "The comparison's proposals are the proposals that were trained on, so reported verified yield describes the corrections that actually reached the trainer.",
+      "hypothesis": "H1",
+      "id": "D10",
+      "path": "correction_comparison.training_proposal_reuse.enabled",
+      "value": true
+    },
+    {
+      "comparison": "!=",
+      "description": "The worker reported a digest over its own base-model files. Without it two arms can run different weights while reporting the same checkout and framework versions.",
+      "id": "D11",
+      "path": "provenance.worker.model_manifest_sha256",
+      "value": null
+    },
+    {
+      "comparison": "set==",
+      "description": "Both correction sources were measured over the same failures.",
+      "id": "D2",
+      "path": "correction_comparison.sources",
+      "value": [
+        "canonical-reference-v1",
+        "self-repair-v1"
+      ]
+    },
+    {
+      "comparison": ">=",
+      "description": "Self-repair produced verified corrections for at least half the failures.",
+      "hypothesis": "H1",
+      "id": "D3",
+      "path": "correction_comparison.per_source.self-repair-v1.verified_rate",
+      "value": 0.5
+    },
+    {
+      "comparison": "==",
+      "description": "Provenance confirms the arm's correction source, so the two arms cannot be confused after the fact.",
+      "hypothesis": "H1",
+      "id": "D4",
+      "path": "provenance.extra.correction_source",
+      "value": "self-repair"
+    },
+    {
+      "comparison": "count>=",
+      "description": "The self-repair arm admitted an expert.",
+      "hypothesis": "H2",
+      "id": "D5",
+      "path": "cycle.experts_admitted",
+      "value": 1
+    },
+    {
+      "arm": "control",
+      "comparison": "==",
+      "description": "The control arm really used the canonical correction source.",
+      "id": "D5c",
+      "path": "correction_source",
+      "value": "canonical"
+    },
+    {
+      "comparison": ">=",
+      "description": "The self-repair arm clears the absolute admission bar.",
+      "hypothesis": "H2",
+      "id": "D6",
+      "path": "experts[*].metrics.heldout_target_rate",
+      "value": 0.75
+    },
+    {
+      "arm": "control",
+      "comparison": "count>=",
+      "description": "The control arm admitted an expert, so the comparison has a reference point.",
+      "hypothesis": "H2",
+      "id": "D6c",
+      "path": "cycle.experts_admitted",
+      "value": 1
+    },
+    {
+      "comparison": "delta>=",
+      "control_path": "experts[*].metrics.heldout_target_rate",
+      "description": "The self-repair arm's held-out fix rate is within 0.1 of the canonical control arm. This is the rule H2 actually names, and it cannot be evaluated without the control report.",
+      "hypothesis": "H2",
+      "id": "D6d",
+      "pair_on": "experts[*].pairing_key",
+      "path": "experts[*].metrics.heldout_target_rate",
+      "value": -0.1
+    },
+    {
+      "comparison": "delta<=",
+      "control_path": "experts[*].metrics.forced_regression_rate",
+      "description": "The self-repair arm forgets no more than the canonical arm. Stated as primary minus control at most 0.0: a positive delta means the self-repair expert broke more prior-passing replay tasks. The previous -1.0 tolerance was vacuous, because both rates lie in [0,1].",
+      "hypothesis": "H2",
+      "id": "D6e",
+      "pair_on": "experts[*].pairing_key",
+      "path": "experts[*].metrics.forced_regression_rate",
+      "value": 0.0
+    },
+    {
+      "comparison": "subset_of",
+      "description": "Reproducibility metadata carries no gap beyond the one declared uncloseable from the control host. The worker model manifest is NOT on this list: a paired A/B comparison cannot rest on two arms that cannot show they loaded the same model files.",
+      "id": "D7",
+      "path": "provenance_gaps",
+      "value": [
+        "models.base.aggregate_sha256"
+      ]
+    },
+    {
+      "comparison": "exists",
+      "description": "Every expert carries a correction-source-independent pairing key, so the two arms can be matched at all. Expert ids are fresh UUIDs and never match across runs.",
+      "id": "D8",
+      "path": "experts[*].metrics.pairing_key"
+    },
+    {
+      "comparison": "exists",
+      "description": "The report carries a run manifest digest, so the metrics these rules read are bound to the run that produced them.",
+      "id": "D9",
+      "path": "run_manifest_sha256"
+    }
+  ],
+  "declared_at": "2026-08-07",
+  "hypotheses": [
+    {
+      "claim": "The deployed model can produce verifier-approved repairs for its own failures at a useful rate.",
+      "falsified_if": "fewer than 50% of training failures yield a verified self-repair within 3 attempts",
+      "id": "H1"
+    },
+    {
+      "claim": "An expert trained only on self-generated verified corrections reaches the same admission bar as one trained on human references.",
+      "falsified_if": "the self-repair arm fails admission while the canonical arm passes, or its held-out target fix rate is more than 0.1 below the canonical arm",
+      "id": "H2"
+    }
+  ],
+  "permitted_provenance_gaps": [
+    "models.base.aggregate_sha256"
+  ],
+  "preregistered_limitations": [
+    "Both arms share the same task catalog and the same hidden verifier suites, so this compares correction provenance only, not task design.",
+    "A verified self-repair is still verifier-approved, not human-approved. The verifier suite is the ceiling on what this can show.",
+    "compare_corrections measures verified-correction yield only. It does not establish that a self-repair-trained expert matches a canonical-trained expert; that is H2 and it needs both MLX cycles.",
+    "Self-repair gets up to three generation attempts per failure while the canonical arm gets one lookup, so the arms are not matched on inference budget. Report total generation calls alongside the outcome.",
+    "Olausson et al. (ICLR 2024) report GPT-4 self-repair feedback at 33.30% against human feedback at 52.60%, so a shortfall here would be unsurprising rather than novel.",
+    "Provenance is partial by declaration; D7 permits exactly one gap, models.base.aggregate_sha256. worker.model_manifest_sha256 is NOT permitted here: it is required resolved identity, because it is the only evidence that both arms loaded the same model files. An unavailable worker manifest refuses the pairing at check time and refuses the run before any cost.",
+    "Delta rules pair experts on experts[*].pairing_key, derived from the cluster label and the actual failed task ids the live capture attempted. Each report also records trained_failure_ids, the subset with accepted corrections that entered the dataset; that subset may differ by correction source and is an outcome, not a pairing mismatch. Matching keys mean the arms selected the same failure cluster, not that their training text was identical. Missing, duplicated or unmatched keys make the comparison unusable (exit 2), not falsified.",
+    "The spec digest binds a report to this spec version. It is NOT a timestamp. This spec carries no timing_attestation, so its preregistration timing is unverified and it claims only seal_self_consistent.",
+    "Each arm runs with an explicit --arm profile. The control arm is validated against control_required_setup, which is what makes a canonical control launchable under a spec whose primary arm requires self-repair.",
+    "run_manifest_sha256 binds report metrics to the run locally. It detects edits; it is not signed and not externally anchored.",
+    "Arm pairing requires matching dirty-source content, worker framework versions, worker checkout revision/tree/dirty/status/worktree content, worker model manifest, sandbox fingerprint and actual training failure set. A permitted gap can waive none of those.",
+    "provenance.worker.model_manifest_sha256 is a required resolved identity, not a permitted gap. The run refuses before the database, the sandbox and training when the worker cannot supply it, and the checker exits 2. The manifest is still a worker self-report: it evidences what the worker said it holds, not proof of what it loaded.",
+    "models.base.aggregate_sha256 remains a permitted partial-provenance gap, and only while the worker model manifest resolves and matches. If that manifest is unavailable, no gap is waived at all.",
+    "Every value the decision rules read is bound into the run manifest by path, derived from this spec's own rules. Editing a rule input without resealing makes the report unusable (exit 2), not falsified.",
+    "Control requirements are derived from these decision rules -- any delta comparison, control_path, pair_on or arm: control -- not from the requires_control_report flag. Removing or falsifying that flag cannot switch off arm pairing or control setup conformance."
+  ],
+  "required_resolved_identity": [
+    "provenance.worker.model_manifest_sha256"
+  ],
+  "required_setup": {
+    "machine": {
+      "arm": "primary",
+      "compare_corrections": true,
+      "correction_source": "self-repair",
+      "min_replay_examples": 50,
+      "self_repair_attempts": 3
+    },
+    "prose": {}
+  },
+  "requires": [
+    "Apple MLX worker reachable (grove worker-preflight)",
+    "LXD sandbox image grove-python-base present",
+    "two fresh databases, one per arm; neither arm may reuse the other's store"
+  ],
+  "requires_control_report": true,
+  "requires_report_integrity": true,
+  "seal_self_consistent": true,
+  "spec_id": "EXP-003",
+  "spec_sha256": "402c5745e40a8fc853611edc4acefa6563336a75e633249b62aa5786e4b24d22",
+  "status": "predeclared; blocked on the 50-task replay cohort",
+  "timing_attestation": null,
+  "title": "Can the model supply its own verified corrections, or does it need human references?"
+}

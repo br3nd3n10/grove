@@ -1,0 +1,16 @@
+.grove/
+# Operator-private scrub terms for scripts/publish_mirror.sh. Never track this.
+.scrub-terms.env
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Workflow run scratch: agent session state and generated research notes.
+# These belong to the run that produced them, not to the repository.
+.atomic/
+research/
